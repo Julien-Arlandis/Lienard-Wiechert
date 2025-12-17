@@ -3,6 +3,18 @@
 <head>
     <meta charset="utf-8">
     <title>Champ de Liénard-Wiechert : Induction et Rayonnement</title>
+    
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']] // Autorise les $ pour les formules en ligne
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+    </script>
+
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
@@ -25,12 +37,14 @@
         #controls::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
 
         #equation-box {
-            margin-top: 15px; padding: 10px 5px;
+            margin-bottom: 15px; padding: 8px 5px;
             background: rgba(0, 0, 0, 0.4); border: 1px solid #444; border-radius: 6px;
             text-align: center; color: #ddd;
         }
 
-        h3 { margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid #666; padding-bottom: 8px; color: #eee; font-size: 15px; text-align: center; line-height: 1.4; }
+        h3 { margin-top: 0; margin-bottom: 10px; color: #eee; font-size: 15px; text-align: center; line-height: 1.4; }
+        hr { border: 0; border-top: 1px solid #555; margin: 15px 0; }
+
         input[type=range] { vertical-align: middle; cursor: pointer; width: 100%; margin: 5px 0; }
         label { color: #ccc; cursor: pointer; }
         .group-box { margin-top: 8px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; border: 1px solid #444; }
@@ -40,24 +54,46 @@
         .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
         .bar { height: 3px; width: 20px; display: inline-block; margin-right: 8px; border-radius: 2px; }
         .val { color: #fff; font-weight: bold; }
-        mjx-container { font-size: 90% !important; color: #eee !important; overflow-x: hidden; }
+        mjx-container { font-size: 90% !important; color: #eee !important; overflow-x: hidden; margin: 5px 0 !important; }
 
+        /* --- TOOLTIPS --- */
         .info-label { border-bottom: 1px dotted #888; cursor: help; }
         .tooltip {
-            visibility: hidden; width: 220px; background-color: #111; color: #fff;
-            text-align: left; border-radius: 6px; padding: 10px;
-            position: absolute; z-index: 100; top: 100%; left: 20px; margin-top: 5px;
-            border: 1px solid #00aaff; box-shadow: 0 5px 15px rgba(0,0,0,0.8);
-            opacity: 0; transition: opacity 0.3s; font-size: 11px; line-height: 1.4; pointer-events: none;
+            visibility: hidden; 
+            width: 260px; 
+            background-color: #1a1a1a; 
+            color: #eee;
+            text-align: left; 
+            border-radius: 6px; 
+            padding: 12px;
+            position: absolute; 
+            z-index: 100; 
+            top: 100%; left: 10px; 
+            margin-top: 5px;
+            border: 1px solid #444; 
+            border-left: 3px solid #00aaff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.9);
+            opacity: 0; 
+            transition: opacity 0.3s; 
+            font-size: 11px; 
+            line-height: 1.5; 
+            pointer-events: none;
         }
         .row:hover .tooltip { visibility: visible; opacity: 1; }
-        .tooltip strong { color: #00aaff; display: block; margin-bottom: 3px; }
+        .tooltip strong { color: #00aaff; display: block; margin-bottom: 5px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 3px; }
+        .tooltip em { color: #aaa; display: block; margin-top: 5px; font-style: italic; }
     </style>
 </head>
 <body>
     <div id="controls">
         <h3>Champ de Liénard-Wiechert :<br>Induction et Rayonnement</h3>
         
+        <div id="equation-box">
+            $$ \vec{E} = \underbrace{\color{#00ff00}{ \frac{q (\vec{n} - \vec{\beta})}{4\pi\epsilon_0 \gamma^2 \kappa^3 R^2} }}_{\text{Coulomb}} + \underbrace{\color{#ff3333}{ \frac{q \vec{n} \times [(\vec{n} - \vec{\beta}) \times \dot{\vec{\beta}}]}{4\pi\epsilon_0 c \kappa^3 R} }}_{\text{Rayonnement}} $$
+        </div>
+        
+        <hr>
+
         <label for="betaSlider">Vitesse des charges (&beta;=v/c) : <span id="betaValue" class="val">0.30</span></label><br>
         <input type="range" id="betaSlider" min="0.1" max="0.95" step="0.01" value="0.30">
         
@@ -82,21 +118,33 @@
                 <input type="checkbox" id="chkShowReal" checked>
                 <span class="dot" style="background:#888;"></span>
                 <label for="chkShowReal" class="info-label">Réelle (t)</label>
-                <div class="tooltip"><strong>Charge Réelle</strong>Position physique actuelle.</div>
+                <div class="tooltip">
+                    <strong>Charge Réelle (Présent)</strong>
+                    Position physique exacte de la particule à l'instant actuel $t$.<br>
+                    <em>Note : L'information que la particule est ici n'a pas encore eu le temps d'arriver à l'observateur.</em>
+                </div>
             </div>
             
             <div class="row">
                 <input type="checkbox" id="chkShowRetarded">
                 <span class="dot" style="background:cyan;"></span>
                 <label for="chkShowRetarded" class="info-label">Retardée (t')</label>
-                <div class="tooltip"><strong>Charge Retardée</strong>Position d'émission du signal.</div>
+                <div class="tooltip">
+                    <strong>Charge Retardée (Passé)</strong>
+                    Position de la particule au temps passé $t' = t - R/c$.<br>
+                    C'est de cet endroit qu'est partie l'onde électromagnétique que l'observateur reçoit maintenant. C'est la "source" réelle du champ.
+                </div>
             </div>
             
             <div class="row">
                 <input type="checkbox" id="chkShowVirtual" checked>
                 <span class="dot" style="background:magenta;"></span>
                 <label for="chkShowVirtual" class="info-label">Virtuelle</label>
-                <div class="tooltip"><strong>Charge Virtuelle</strong>Position extrapolée.</div>
+                <div class="tooltip">
+                    <strong>Charge Virtuelle (Extrapolée)</strong>
+                    Position qu'aurait la charge aujourd'hui si elle avait continué tout droit à vitesse constante depuis l'émission.<br>
+                    <em>Physique : Le champ électrique "proche" (Coulomb) pointe vers cette position, créant l'illusion que le champ anticipe le mouvement.</em>
+                </div>
             </div>
         </div>
 
@@ -124,11 +172,6 @@
                     <label for="chkShowTrail" style="font-style:italic;">Afficher la trace</label>
                 </div>
             </div>
-        </div>
-
-        <div id="equation-box">
-            <div style="font-weight:bold; margin-bottom:5px; color:#aaa; font-size:13px;">Équation de Liénard-Wiechert</div>
-            $$ \vec{E} = \underbrace{\color{#00ff00}{...}}_{\text{Coulomb}} + \underbrace{\color{#ff3333}{...}}_{\text{Rayonnement}} $$
         </div>
     </div>
     
@@ -324,7 +367,6 @@
                     ctx.fillStyle = '#666'; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
                 }
                 
-                // Calcul seulement si nécessaire
                 if(chkShowRetarded.checked || chkShowVirtual.checked) {
                     let refX = chkFieldMap.checked ? 0 : mouse.x;
                     let refY = chkFieldMap.checked ? 0 : mouse.y;
