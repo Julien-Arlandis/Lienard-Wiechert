@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Simulation Liénard-Wiechert : Interface Unifiée</title>
+    <title>Simulation Liénard-Wiechert : Avec Explications</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
@@ -21,21 +21,19 @@
             pointer-events: auto;
             user-select: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.8);
-            width: 320px; /* Largeur fixe de la colonne */
+            width: 320px;
             z-index: 10;
             max-height: 95vh; 
-            overflow-y: auto; /* Scroll si l'écran est trop petit en hauteur */
+            overflow-y: auto;
             font-size: 12px;
             scrollbar-width: thin;
             scrollbar-color: #555 #222;
         }
 
-        /* Style de la scrollbar */
         #controls::-webkit-scrollbar { width: 8px; }
         #controls::-webkit-scrollbar-track { background: #222; }
         #controls::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
 
-        /* Boîte équation intégrée à la colonne */
         #equation-box {
             margin-top: 15px;
             padding: 10px 5px;
@@ -54,7 +52,7 @@
         .group-box { margin-top: 8px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; border: 1px solid #444; }
         .sub-group { margin-left: 15px; border-left: 2px solid #555; padding-left: 5px; margin-top: 2px; }
         
-        .row { display: flex; align-items: center; margin-bottom: 3px; }
+        .row { display: flex; align-items: center; margin-bottom: 3px; position: relative; } /* Relative pour le tooltip */
         input[type=checkbox] { margin-right: 6px; transform: scale(1.0); cursor: pointer; }
         
         .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
@@ -62,12 +60,42 @@
         
         .val { color: #fff; font-weight: bold; }
         
-        /* Ajustement MathJax pour largeur colonne */
-        mjx-container { 
-            font-size: 90% !important; 
-            color: #eee !important; 
-            overflow-x: hidden;
+        mjx-container { font-size: 90% !important; color: #eee !important; overflow-x: hidden; }
+
+        /* --- STYLES DES TOOLTIPS (INFOBULLES) --- */
+        .info-label {
+            border-bottom: 1px dotted #888; /* Indique qu'il y a une info */
+            cursor: help;
         }
+
+        .tooltip {
+            visibility: hidden;
+            width: 220px;
+            background-color: #111;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 100;
+            top: 100%;
+            left: 20px;
+            margin-top: 5px;
+            border: 1px solid #00aaff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 11px;
+            line-height: 1.4;
+            pointer-events: none;
+        }
+
+        .row:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .tooltip strong { color: #00aaff; display: block; margin-bottom: 3px; }
     </style>
 </head>
 <body>
@@ -82,9 +110,39 @@
 
         <div class="group-box">
             <div style="font-weight:bold; color:#bbb; margin-bottom:3px;">Position des charges :</div>
-            <div class="row"><input type="checkbox" id="chkShowReal" checked><span class="dot" style="background:#888;"></span><label for="chkShowReal">Réelle (t)</label></div>
-            <div class="row"><input type="checkbox" id="chkShowRetarded" checked><span class="dot" style="background:cyan;"></span><label for="chkShowRetarded">Retardée (t')</label></div>
-            <div class="row"><input type="checkbox" id="chkShowVirtual" checked><span class="dot" style="background:magenta;"></span><label for="chkShowVirtual">Virtuelle</label></div>
+            
+            <div class="row">
+                <input type="checkbox" id="chkShowReal" checked>
+                <span class="dot" style="background:#888;"></span>
+                <label for="chkShowReal" class="info-label">Réelle (t)</label>
+                <div class="tooltip">
+                    <strong>Charge Réelle (Présent)</strong>
+                    Position physique actuelle de la particule au temps t. <br>
+                    <em>Note : L'information de cette position n'est pas encore arrivée à l'observateur.</em>
+                </div>
+            </div>
+            
+            <div class="row">
+                <input type="checkbox" id="chkShowRetarded" checked>
+                <span class="dot" style="background:cyan;"></span>
+                <label for="chkShowRetarded" class="info-label">Retardée (t')</label>
+                <div class="tooltip">
+                    <strong>Charge Retardée (Passé)</strong>
+                    Position de la particule au moment où elle a émis le champ que nous recevons maintenant.<br>
+                    C'est la source réelle de l'onde électromagnétique.
+                </div>
+            </div>
+            
+            <div class="row">
+                <input type="checkbox" id="chkShowVirtual" checked>
+                <span class="dot" style="background:magenta;"></span>
+                <label for="chkShowVirtual" class="info-label">Virtuelle</label>
+                <div class="tooltip">
+                    <strong>Charge Virtuelle (Extrapolée)</strong>
+                    Position qu'aurait la charge si elle avait continué à vitesse constante depuis l'émission.<br>
+                    Le champ électrique "proche" (Coulomb) pointe vers cette position.
+                </div>
+            </div>
         </div>
 
         <div class="group-box" style="border-left: 3px solid #00ff00;">
@@ -289,7 +347,7 @@
         return null;
     }
 
-    // --- DESSIN FLÈCHE ---
+    // --- DESSIN FLÈCHE (TÊTE PETITE) ---
     function drawArrow(ctx, fromX, fromY, toX, toY, color, lineWidth, opacity = 1.0) {
         if (!isFinite(toX) || !isFinite(toY)) return;
         const dx = toX - fromX;
@@ -298,9 +356,9 @@
         
         if (len < 2) return;
 
-        const headLength = 8 + lineWidth; // Tête petite
+        const headLength = 8 + lineWidth; 
         const angle = Math.atan2(dy, dx);
-        const headAngle = Math.PI / 9; // Tête fine
+        const headAngle = Math.PI / 9; 
         
         ctx.save();
         ctx.globalAlpha = opacity;
