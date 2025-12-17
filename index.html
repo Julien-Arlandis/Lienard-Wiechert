@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Champ de Liénard-Wiechert : Double Formulation Colorée</title>
+    <title>Champ de Liénard-Wiechert : Avec URL Dynamique</title>
     
     <script>
     window.MathJax = {
@@ -229,6 +229,56 @@
 
     let lineSeeds = [];
 
+    // --- GESTION URL DYNAMIQUE ---
+    function updateURL() {
+        const params = new URLSearchParams();
+        params.set('beta', betaSlider.value);
+        params.set('n', nSlider.value);
+        params.set('r', rSlider.value);
+        
+        // Modes
+        params.set('lines', chkPauseTrace.checked ? '1' : '0');
+        params.set('map', chkFieldMap.checked ? '1' : '0');
+        
+        // Charges
+        params.set('real', chkShowReal.checked ? '1' : '0');
+        params.set('ret', chkShowRetarded.checked ? '1' : '0');
+        params.set('virt', chkShowVirtual.checked ? '1' : '0');
+
+        window.history.replaceState({}, '', `${location.pathname}?${params}`);
+    }
+
+    function loadFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        if(!params.has('beta')) return; // Si pas de params, on garde les défauts
+
+        if(params.has('beta')) {
+            let val = parseFloat(params.get('beta'));
+            betaSlider.value = val;
+            targetBeta = val;
+            betaValue.textContent = val.toFixed(2);
+        }
+        if(params.has('n')) {
+            let val = parseInt(params.get('n'));
+            nSlider.value = val;
+            N = val;
+            nValue.textContent = val;
+        }
+        if(params.has('r')) {
+            let val = parseInt(params.get('r'));
+            rSlider.value = val;
+            R_ring = val;
+            rValue.textContent = val;
+        }
+        
+        if(params.has('lines')) chkPauseTrace.checked = (params.get('lines') === '1');
+        if(params.has('map')) chkFieldMap.checked = (params.get('map') === '1');
+        
+        if(params.has('real')) chkShowReal.checked = (params.get('real') === '1');
+        if(params.has('ret')) chkShowRetarded.checked = (params.get('ret') === '1');
+        if(params.has('virt')) chkShowVirtual.checked = (params.get('virt') === '1');
+    }
+
     function initParticles() {
         particles = []; histories = []; vectorTrail = [];
         for(let i=0; i<N; i++) {
@@ -256,13 +306,26 @@
 
     function updateFreq() { freq = (targetBeta * c) / (R_ring * amp); }
 
-    nSlider.addEventListener('input', function() { N = parseInt(this.value); nValue.textContent = N; initParticles(); });
-    betaSlider.addEventListener('input', function() { targetBeta = parseFloat(this.value); betaValue.textContent = targetBeta.toFixed(2); updateFreq(); });
+    // Ajout de updateURL() aux events
+    nSlider.addEventListener('input', function() { 
+        N = parseInt(this.value); nValue.textContent = N; 
+        initParticles(); updateURL(); 
+    });
+    
+    betaSlider.addEventListener('input', function() { 
+        targetBeta = parseFloat(this.value); betaValue.textContent = targetBeta.toFixed(2); 
+        updateFreq(); updateURL(); 
+    });
     
     rSlider.addEventListener('input', function() {
         R_ring = parseInt(this.value);
         rValue.textContent = R_ring;
-        updateFreq(); 
+        updateFreq(); updateURL();
+    });
+
+    // Checkboxes avec updateURL
+    [chkShowReal, chkShowRetarded, chkShowVirtual].forEach(chk => {
+        chk.addEventListener('change', updateURL);
     });
 
     function updateUIVisibility() {
@@ -281,12 +344,12 @@
                 mouseSection.classList.remove('disabled-section');
             }
         }
+        updateURL(); // Update URL on mode change too
     }
     
     chkPauseTrace.addEventListener('change', updateUIVisibility);
     chkFieldMap.addEventListener('change', updateUIVisibility);
-    updateUIVisibility();
-
+    
     function resize() {
         width = window.innerWidth; height = window.innerHeight;
         canvas.width = width; canvas.height = height;
@@ -301,7 +364,12 @@
         vectorTrail = []; 
     });
 
-    updateFreq(); initParticles(); initLineSeeds();
+    // --- SEQUENCEMENT INITIALISATION ---
+    loadFromURL(); // Charge l'URL d'abord
+    updateFreq(); 
+    initParticles(); 
+    initLineSeeds();
+    updateUIVisibility(); // Applique l'état UI correct
 
     function updatePhysics() {
         globalTime++;
