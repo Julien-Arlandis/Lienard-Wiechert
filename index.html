@@ -76,7 +76,10 @@
         
         <hr>
 
-        <label for="betaSlider">Vitesse des charges (&beta;=v/c) : <span id="betaValue" class="val">0.30</span></label><br>
+        <label for="rSlider" style="color:#ffcc00;">Zoom / Rayon de l'anneau : <span id="rValue" class="val">150</span></label><br>
+        <input type="range" id="rSlider" min="15" max="200" step="5" value="150">
+        
+        <label for="betaSlider" style="margin-top:5px; display:block;">Vitesse des charges (&beta;=v/c) : <span id="betaValue" class="val">0.30</span></label>
         <input type="range" id="betaSlider" min="0.1" max="0.95" step="0.01" value="0.30">
         
         <label for="nSlider" style="margin-top:2px; display:block;">Nombre de charges : <span id="nValue" class="val">150</span></label>
@@ -178,11 +181,13 @@
     const nValue = document.getElementById('nValue');
     const betaSlider = document.getElementById('betaSlider');
     const betaValue = document.getElementById('betaValue');
+    const rSlider = document.getElementById('rSlider');
+    const rValue = document.getElementById('rValue');
     const mouseSection = document.getElementById('mouseSection');
     
     const chkPauseTrace = document.getElementById('chkPauseTrace');
     const chkFieldMap = document.getElementById('chkFieldMap');
-    const boxFieldMap = document.getElementById('boxFieldMap'); // Conteneur pour griser
+    const boxFieldMap = document.getElementById('boxFieldMap'); 
 
     const chkCoulombRad = document.getElementById('chkCoulombRad');
     const chkCoulombOrtho = document.getElementById('chkCoulombOrtho');
@@ -196,8 +201,8 @@
     let width, height;
 
     const c = 6;            
-    const R_ring = 150;     
-    const K_BASE = 4000;           
+    let R_ring = 150; // Initialisé à 150
+    const K_BASE_REF = 4000;
     const amp = 0.25; 
 
     let freq = 0.03; 
@@ -245,18 +250,22 @@
     nSlider.addEventListener('input', function() { N = parseInt(this.value); nValue.textContent = N; initParticles(); });
     betaSlider.addEventListener('input', function() { targetBeta = parseFloat(this.value); betaValue.textContent = targetBeta.toFixed(2); updateFreq(); });
     
+    rSlider.addEventListener('input', function() {
+        R_ring = parseInt(this.value);
+        rValue.textContent = R_ring;
+        updateFreq(); 
+    });
+
     function updateUIVisibility() {
-        // Logique : Si "Lignes" est coché, "Carte" est désactivé
         if(chkPauseTrace.checked) {
             boxFieldMap.classList.add('disabled-section');
-            chkFieldMap.disabled = true; // Désactive l'input
-            mouseSection.classList.add('disabled-section'); // Désactive aussi la souris
+            chkFieldMap.disabled = true; 
+            mouseSection.classList.add('disabled-section'); 
         } 
         else {
             boxFieldMap.classList.remove('disabled-section');
             chkFieldMap.disabled = false;
             
-            // Si "Carte" est coché, la souris est désactivée
             if(chkFieldMap.checked) {
                 mouseSection.classList.add('disabled-section');
             } else {
@@ -326,7 +335,9 @@
     function computeFieldAt(x, y) {
         let res = { total: {x:0, y:0}, coulomb: {x:0, y:0}, rad: {x:0, y:0}, count: 0 };
         let gammaApprox = 1 / Math.sqrt(1 - targetBeta*targetBeta);
-        let visualK = K_BASE / (gammaApprox * 0.5 + 0.5); 
+        
+        let zoomFactor = 150 / R_ring; 
+        let visualK = K_BASE_REF * zoomFactor * 1.5 / (gammaApprox * 0.5 + 0.5); 
 
         for(let i=0; i<N; i++) {
             let ret = getRetardedState(i, x, y);
@@ -459,8 +470,6 @@
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 4; ctx.stroke();
         ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
 
-        // --- AFFICHAGE DES CHARGES ---
-        // Affiche toujours si N < 350
         if ((chkShowReal.checked || chkShowRetarded.checked || chkShowVirtual.checked)) {
             for(let i=0; i<N; i++) {
                 let p = particles[i];
@@ -489,12 +498,10 @@
             }
         }
 
-        // --- MODE 1 : LIGNES CONTINUES (PAUSE) ---
         if (chkPauseTrace.checked) {
             drawContinuousStreamlines();
         }
 
-        // --- MODE 2 : CARTE (GRID) ---
         else if (chkFieldMap.checked) {
             const step = 40; 
             const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
@@ -525,7 +532,6 @@
             }
         } 
         
-        // --- MODE 3 : SOURIS (DÉFAUT) ---
         else {
             let field = computeFieldAt(mouse.x, mouse.y);
             if (field.count > 0) {
