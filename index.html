@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Simulation Liénard-Wiechert : Avec Explications</title>
+    <title>Champ de Liénard-Wiechert : Induction et Rayonnement</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
@@ -21,19 +21,21 @@
             pointer-events: auto;
             user-select: none;
             box-shadow: 0 4px 15px rgba(0,0,0,0.8);
-            width: 320px;
+            width: 320px; /* Largeur fixe de la colonne */
             z-index: 10;
             max-height: 95vh; 
-            overflow-y: auto;
+            overflow-y: auto; /* Scroll si l'écran est trop petit en hauteur */
             font-size: 12px;
             scrollbar-width: thin;
             scrollbar-color: #555 #222;
         }
 
+        /* Style de la scrollbar */
         #controls::-webkit-scrollbar { width: 8px; }
         #controls::-webkit-scrollbar-track { background: #222; }
         #controls::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
 
+        /* Boîte équation intégrée à la colonne */
         #equation-box {
             margin-top: 15px;
             padding: 10px 5px;
@@ -44,7 +46,16 @@
             color: #ddd;
         }
 
-        h3 { margin-top: 0; margin-bottom: 8px; border-bottom: 1px solid #666; padding-bottom: 5px; color: #eee; font-size: 14px; }
+        h3 { 
+            margin-top: 0; 
+            margin-bottom: 12px; 
+            border-bottom: 1px solid #666; 
+            padding-bottom: 8px; 
+            color: #eee; 
+            font-size: 15px; 
+            line-height: 1.4;
+            text-align: center;
+        }
         
         input[type=range] { vertical-align: middle; cursor: pointer; width: 100%; margin: 5px 0; }
         label { color: #ccc; cursor: pointer; }
@@ -52,7 +63,7 @@
         .group-box { margin-top: 8px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; border: 1px solid #444; }
         .sub-group { margin-left: 15px; border-left: 2px solid #555; padding-left: 5px; margin-top: 2px; }
         
-        .row { display: flex; align-items: center; margin-bottom: 3px; position: relative; } /* Relative pour le tooltip */
+        .row { display: flex; align-items: center; margin-bottom: 3px; position: relative; }
         input[type=checkbox] { margin-right: 6px; transform: scale(1.0); cursor: pointer; }
         
         .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
@@ -60,14 +71,15 @@
         
         .val { color: #fff; font-weight: bold; }
         
-        mjx-container { font-size: 90% !important; color: #eee !important; overflow-x: hidden; }
-
-        /* --- STYLES DES TOOLTIPS (INFOBULLES) --- */
-        .info-label {
-            border-bottom: 1px dotted #888; /* Indique qu'il y a une info */
-            cursor: help;
+        /* Ajustement MathJax pour largeur colonne */
+        mjx-container { 
+            font-size: 90% !important; 
+            color: #eee !important; 
+            overflow-x: hidden;
         }
 
+        /* --- TOOLTIPS --- */
+        .info-label { border-bottom: 1px dotted #888; cursor: help; }
         .tooltip {
             visibility: hidden;
             width: 220px;
@@ -78,8 +90,7 @@
             padding: 10px;
             position: absolute;
             z-index: 100;
-            top: 100%;
-            left: 20px;
+            top: 100%; left: 20px;
             margin-top: 5px;
             border: 1px solid #00aaff;
             box-shadow: 0 5px 15px rgba(0,0,0,0.8);
@@ -89,18 +100,13 @@
             line-height: 1.4;
             pointer-events: none;
         }
-
-        .row:hover .tooltip {
-            visibility: visible;
-            opacity: 1;
-        }
-
+        .row:hover .tooltip { visibility: visible; opacity: 1; }
         .tooltip strong { color: #00aaff; display: block; margin-bottom: 3px; }
     </style>
 </head>
 <body>
     <div id="controls">
-        <h3>Paramètres</h3>
+        <h3>Champ de Liénard-Wiechert :<br>Induction et Rayonnement</h3>
         
         <label for="betaSlider">Vitesse (&beta;=v/c) : <span id="betaValue" class="val">0.25</span></label><br>
         <input type="range" id="betaSlider" min="0.1" max="0.95" step="0.01" value="0.25">
