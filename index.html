@@ -11,91 +11,45 @@
         canvas { display: block; }
         
         #controls { 
-            position: absolute; 
-            top: 10px; 
-            left: 10px; 
-            background: rgba(30, 30, 30, 0.95); 
-            padding: 12px; 
-            border: 1px solid #666;
-            border-radius: 8px;
-            pointer-events: auto;
-            user-select: none;
+            position: absolute; top: 10px; left: 10px; 
+            background: rgba(30, 30, 30, 0.95); padding: 12px; 
+            border: 1px solid #666; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.8);
-            width: 330px; /* Légèrement élargi pour les nouveaux textes */
-            z-index: 10;
-            max-height: 95vh; 
-            overflow-y: auto;
+            width: 330px; z-index: 10;
+            max-height: 95vh; overflow-y: auto;
             font-size: 12px;
-            scrollbar-width: thin;
-            scrollbar-color: #555 #222;
+            scrollbar-width: thin; scrollbar-color: #555 #222;
         }
-
         #controls::-webkit-scrollbar { width: 8px; }
         #controls::-webkit-scrollbar-track { background: #222; }
         #controls::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
 
         #equation-box {
-            margin-top: 15px;
-            padding: 10px 5px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid #444;
-            border-radius: 6px;
-            text-align: center;
-            color: #ddd;
+            margin-top: 15px; padding: 10px 5px;
+            background: rgba(0, 0, 0, 0.4); border: 1px solid #444; border-radius: 6px;
+            text-align: center; color: #ddd;
         }
 
-        h3 { 
-            margin-top: 0; 
-            margin-bottom: 12px; 
-            border-bottom: 1px solid #666; 
-            padding-bottom: 8px; 
-            color: #eee; 
-            font-size: 15px; 
-            line-height: 1.4;
-            text-align: center;
-        }
-        
+        h3 { margin-top: 0; margin-bottom: 12px; border-bottom: 1px solid #666; padding-bottom: 8px; color: #eee; font-size: 15px; text-align: center; line-height: 1.4; }
         input[type=range] { vertical-align: middle; cursor: pointer; width: 100%; margin: 5px 0; }
         label { color: #ccc; cursor: pointer; }
-
         .group-box { margin-top: 8px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; border: 1px solid #444; }
         .sub-group { margin-left: 15px; border-left: 2px solid #555; padding-left: 5px; margin-top: 2px; }
-        
         .row { display: flex; align-items: center; margin-bottom: 3px; position: relative; }
         input[type=checkbox] { margin-right: 6px; transform: scale(1.0); cursor: pointer; }
-        
         .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
         .bar { height: 3px; width: 20px; display: inline-block; margin-right: 8px; border-radius: 2px; }
-        
         .val { color: #fff; font-weight: bold; }
-        
-        mjx-container { 
-            font-size: 90% !important; 
-            color: #eee !important; 
-            overflow-x: hidden;
-        }
+        mjx-container { font-size: 90% !important; color: #eee !important; overflow-x: hidden; }
 
-        /* --- TOOLTIPS --- */
+        /* Tooltips */
         .info-label { border-bottom: 1px dotted #888; cursor: help; }
         .tooltip {
-            visibility: hidden;
-            width: 220px;
-            background-color: #111;
-            color: #fff;
-            text-align: left;
-            border-radius: 6px;
-            padding: 10px;
-            position: absolute;
-            z-index: 100;
-            top: 100%; left: 20px;
-            margin-top: 5px;
-            border: 1px solid #00aaff;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
-            opacity: 0;
-            transition: opacity 0.3s;
-            font-size: 11px;
-            line-height: 1.4;
-            pointer-events: none;
+            visibility: hidden; width: 220px; background-color: #111; color: #fff;
+            text-align: left; border-radius: 6px; padding: 10px;
+            position: absolute; z-index: 100; top: 100%; left: 20px; margin-top: 5px;
+            border: 1px solid #00aaff; box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+            opacity: 0; transition: opacity 0.3s; font-size: 11px; line-height: 1.4; pointer-events: none;
         }
         .row:hover .tooltip { visibility: visible; opacity: 1; }
         .tooltip strong { color: #00aaff; display: block; margin-bottom: 3px; }
@@ -105,78 +59,47 @@
     <div id="controls">
         <h3>Champ de Liénard-Wiechert :<br>Induction et Rayonnement</h3>
         
-        <label for="betaSlider">Vitesse des charges (&beta;=v/c) : <span id="betaValue" class="val">0.25</span></label><br>
-        <input type="range" id="betaSlider" min="0.1" max="0.95" step="0.01" value="0.25">
+        <label for="betaSlider">Vitesse des charges (&beta;=v/c) : <span id="betaValue" class="val">0.30</span></label><br>
+        <input type="range" id="betaSlider" min="0.1" max="0.95" step="0.01" value="0.30">
         
         <label for="nSlider" style="margin-top:2px; display:block;">Nombre de charges : <span id="nValue" class="val">200</span></label>
         <input type="range" id="nSlider" min="1" max="500" value="200">
 
         <div class="group-box">
             <div style="font-weight:bold; color:#bbb; margin-bottom:3px;">Position des charges :</div>
-            
             <div class="row">
                 <input type="checkbox" id="chkShowReal" checked>
                 <span class="dot" style="background:#888;"></span>
                 <label for="chkShowReal" class="info-label">Réelle (t)</label>
-                <div class="tooltip">
-                    <strong>Charge Réelle (Présent)</strong>
-                    Position physique actuelle de la particule au temps t. <br>
-                    <em>Note : L'information de cette position n'est pas encore arrivée à l'observateur.</em>
-                </div>
+                <div class="tooltip"><strong>Charge Réelle</strong>Position physique actuelle au temps t.</div>
             </div>
-            
             <div class="row">
                 <input type="checkbox" id="chkShowRetarded" checked>
                 <span class="dot" style="background:cyan;"></span>
                 <label for="chkShowRetarded" class="info-label">Retardée (t')</label>
-                <div class="tooltip">
-                    <strong>Charge Retardée (Passé)</strong>
-                    Position de la particule au moment où elle a émis le champ que nous recevons maintenant.<br>
-                    C'est la source réelle de l'onde électromagnétique.
-                </div>
+                <div class="tooltip"><strong>Charge Retardée</strong>Position au moment de l'émission du signal reçu.</div>
             </div>
-            
             <div class="row">
                 <input type="checkbox" id="chkShowVirtual" checked>
                 <span class="dot" style="background:magenta;"></span>
                 <label for="chkShowVirtual" class="info-label">Virtuelle</label>
-                <div class="tooltip">
-                    <strong>Charge Virtuelle (Extrapolée)</strong>
-                    Position qu'aurait la charge si elle avait continué à vitesse constante depuis l'émission.<br>
-                    Le champ électrique "proche" (Coulomb) pointe vers cette position.
-                </div>
+                <div class="tooltip"><strong>Charge Virtuelle</strong>Position extrapolée à vitesse constante.</div>
             </div>
         </div>
 
         <div class="group-box" style="border-left: 3px solid #00ff00;">
             <div style="font-weight:bold; color:#ccffcc;">Terme Coulomb (1/R²)</div>
             <div class="sub-group">
-                <div class="row">
-                    <input type="checkbox" id="chkCoulombRad" checked>
-                    <span class="bar" style="background: #00ff00;"></span>
-                    <label for="chkCoulombRad">Radiale</label>
-                </div>
-                <div class="row">
-                    <input type="checkbox" id="chkCoulombOrtho" checked>
-                    <span class="bar" style="background: #66ff66; opacity:0.7;"></span>
-                    <label for="chkCoulombOrtho">Orthoradiale</label>
-                </div>
+                <div class="row"><input type="checkbox" id="chkCoulombRad" checked><span class="bar" style="background: #00ff00;"></span><label>Radiale</label></div>
+                <div class="row"><input type="checkbox" id="chkCoulombOrtho" checked><span class="bar" style="background: #66ff66; opacity:0.7;"></span><label>Orthoradiale</label></div>
             </div>
         </div>
 
         <div class="group-box" style="border-left: 3px solid #ff3333;">
             <div style="font-weight:bold; color:#ffcccc;">Terme Rayonnement (1/R)</div>
             <div class="sub-group">
-                <div class="row">
-                    <input type="checkbox" id="chkRadRad" checked>
-                    <span class="bar" style="background: #ff3333;"></span>
-                    <label for="chkRadRad">Radiale</label>
-                </div>
-                <div class="row">
-                    <input type="checkbox" id="chkRadOrtho" checked>
-                    <span class="bar" style="background: #ff8888; opacity:0.7;"></span>
-                    <label for="chkRadOrtho">Orthoradiale</label>
-                </div>
+                <div class="row"><input type="checkbox" id="chkRadRad" checked><span class="bar" style="background: #ff3333;"></span><label>Radiale</label></div>
+                <div class="row"><input type="checkbox" id="chkRadOrtho" checked><span class="bar" style="background: #ff8888; opacity:0.7;"></span><label>Orthoradiale</label></div>
             </div>
         </div>
 
@@ -185,26 +108,16 @@
                 <span class="bar" style="background: #ffff00; height:4px; box-shadow:0 0 5px yellow;"></span>
                 <label style="color: #ffff00; font-weight:bold;">Champ Total E (Somme)</label>
             </div>
+            <div class="row" style="margin-top:5px; border-top:1px solid #555; padding-top:5px;">
+                <input type="checkbox" id="chkShowTrail" checked>
+                <label for="chkShowTrail" style="color: #ffffaa; font-style:italic;">Afficher la trace (Hodographe)</label>
+            </div>
         </div>
 
         <div id="equation-box">
             <div style="font-weight:bold; margin-bottom:5px; color:#aaa; font-size:13px;">Équation de Liénard-Wiechert</div>
-            
-            $$ 
-            \vec{E} = 
-            \underbrace{ 
-                \color{#00ff00}{ \frac{q}{4\pi\epsilon_0} \left[ \frac{\vec{n} - \vec{\beta}}{\gamma^2 \kappa^3 R^2} \right]_{ret} } 
-            }_{\text{Coulomb (Vert)}} 
-            $$
-            
-            $$
-            + 
-            \underbrace{ 
-                \color{#ff3333}{ \frac{q}{4\pi\epsilon_0 c} \left[ \frac{\vec{n} \times [(\vec{n} - \vec{\beta}) \times \dot{\vec{\beta}}]}{\kappa^3 R} \right]_{ret} } 
-            }_{\text{Rayonnement (Rouge)}} 
-            $$
+            $$ \vec{E} = \underbrace{\color{#00ff00}{\frac{q}{4\pi\epsilon_0} \left[ \frac{\vec{n} - \vec{\beta}}{\gamma^2 \kappa^3 R^2} \right]_{ret}}}_{\text{Coulomb}} + \underbrace{\color{#ff3333}{\frac{q}{4\pi\epsilon_0 c} \left[ \frac{\vec{n} \times [(\vec{n} - \vec{\beta}) \times \dot{\vec{\beta}}]}{\kappa^3 R} \right]_{ret}}}_{\text{Rayonnement}} $$
         </div>
-
     </div>
     
     <canvas id="simCanvas"></canvas>
@@ -219,107 +132,77 @@
     const betaSlider = document.getElementById('betaSlider');
     const betaValue = document.getElementById('betaValue');
     
-    // Checkboxes Coulomb
     const chkCoulombRad = document.getElementById('chkCoulombRad');
     const chkCoulombOrtho = document.getElementById('chkCoulombOrtho');
-    
-    // Checkboxes Rayonnement
     const chkRadRad = document.getElementById('chkRadRad');
     const chkRadOrtho = document.getElementById('chkRadOrtho');
-    
-    // Checkboxes Positions
     const chkShowReal = document.getElementById('chkShowReal');
     const chkShowRetarded = document.getElementById('chkShowRetarded');
     const chkShowVirtual = document.getElementById('chkShowVirtual');
+    const chkShowTrail = document.getElementById('chkShowTrail'); 
 
     let width, height;
 
-    // --- CONSTANTES ---
     const c = 6;            
     const R_ring = 150;     
     const K_BASE = 4000;           
     const amp = 0.25; 
 
-    // Variables Dynamiques
+    // Initialisation beta à 0.30
     let freq = 0.03; 
-    let targetBeta = 0.25; 
+    let targetBeta = 0.30; 
 
-    // État Simulation
     let mouse = { x: 0, y: 0 };
     let N = 200; 
     let particles = [];
     let histories = []; 
     const MAX_HISTORY = 600; 
     let globalTime = 0;
+    
+    let vectorTrail = []; 
+    const MAX_TRAIL_LENGTH = 150; 
 
-    // --- INITIALISATION ---
     function initParticles() {
-        particles = [];
-        histories = [];
+        particles = []; histories = []; vectorTrail = [];
         for(let i=0; i<N; i++) {
             let baseAngle = (Math.PI * 2 * i) / N;
-            particles.push({
-                baseAngle: baseAngle,
-                phaseOffset: 0, 
-                x: 0, y: 0, vx: 0, vy: 0, ax: 0, ay: 0
-            });
+            particles.push({ baseAngle: baseAngle, phaseOffset: 0, x: 0, y: 0, vx: 0, vy: 0, ax: 0, ay: 0 });
             histories.push([]); 
         }
     }
 
-    function updateFreq() {
-        freq = (targetBeta * c) / (R_ring * amp);
-    }
+    function updateFreq() { freq = (targetBeta * c) / (R_ring * amp); }
 
-    // --- EVENTS ---
-    nSlider.addEventListener('input', function() {
-        N = parseInt(this.value);
-        nValue.textContent = N;
-        initParticles();
-    });
-
-    betaSlider.addEventListener('input', function() {
-        targetBeta = parseFloat(this.value);
-        betaValue.textContent = targetBeta.toFixed(2);
-        updateFreq();
-    });
+    nSlider.addEventListener('input', function() { N = parseInt(this.value); nValue.textContent = N; initParticles(); });
+    betaSlider.addEventListener('input', function() { targetBeta = parseFloat(this.value); betaValue.textContent = targetBeta.toFixed(2); updateFreq(); });
 
     function resize() {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas.width = width;
-        canvas.height = height;
+        width = window.innerWidth; height = window.innerHeight;
+        canvas.width = width; canvas.height = height;
     }
-    window.addEventListener('resize', resize);
-    resize();
+    window.addEventListener('resize', resize); resize();
 
     canvas.addEventListener('mousemove', e => {
         const rect = canvas.getBoundingClientRect();
         mouse.x = e.clientX - rect.left - width / 2;
         mouse.y = e.clientY - rect.top - height / 2;
+        vectorTrail = []; 
     });
 
-    updateFreq();
-    initParticles();
+    updateFreq(); initParticles();
 
-    // --- PHYSIQUE ---
     function updatePhysics() {
         globalTime++;
         for(let i=0; i<N; i++) {
             let p = particles[i];
-            
             let phase = globalTime * freq + p.phaseOffset;
             let theta = p.baseAngle + amp * Math.sin(phase);
             let thetaDot = amp * freq * Math.cos(phase);
             let thetaDotDot = -amp * freq * freq * Math.sin(phase);
-
-            let cosT = Math.cos(theta);
-            let sinT = Math.sin(theta);
+            let cosT = Math.cos(theta); let sinT = Math.sin(theta);
             
-            p.x = R_ring * cosT;
-            p.y = R_ring * sinT;
-            p.vx = -R_ring * sinT * thetaDot;
-            p.vy =  R_ring * cosT * thetaDot;
+            p.x = R_ring * cosT; p.y = R_ring * sinT;
+            p.vx = -R_ring * sinT * thetaDot; p.vy =  R_ring * cosT * thetaDot;
             p.ax = -R_ring * (cosT * thetaDot * thetaDot + sinT * thetaDotDot);
             p.ay =  R_ring * (-sinT * thetaDot * thetaDot + cosT * thetaDotDot);
 
@@ -328,7 +211,6 @@
         }
     }
 
-    // --- MATHS ---
     function sub(v1, v2) { return { x: v1.x - v2.x, y: v1.y - v2.y }; }
     function mag(v) { return Math.sqrt(v.x * v.x + v.y * v.y); }
     function normalize(v) { let m = mag(v); return m === 0 ? {x:0, y:0} : { x: v.x/m, y: v.y/m }; }
@@ -340,201 +222,110 @@
         let searchLimit = Math.min(hist.length, 600);
         for (let k = 0; k < searchLimit; k++) {
             let s = hist[k];
-            let dx = obsX - s.x;
-            let dy = obsY - s.y;
+            let dx = obsX - s.x; let dy = obsY - s.y;
             let dist = Math.sqrt(dx*dx + dy*dy);
-            if (Math.abs(dist - k * c) < c) {
-                return { state: s, R: dist, vectorR: {x: dx, y: dy} };
-            }
+            if (Math.abs(dist - k * c) < c) return { state: s, R: dist, vectorR: {x: dx, y: dy} };
         }
         return null;
     }
 
-    // --- DESSIN FLÈCHE (TÊTE PETITE) ---
     function drawArrow(ctx, fromX, fromY, toX, toY, color, lineWidth, opacity = 1.0) {
         if (!isFinite(toX) || !isFinite(toY)) return;
-        const dx = toX - fromX;
-        const dy = toY - fromY;
+        const dx = toX - fromX; const dy = toY - fromY;
         const len = Math.sqrt(dx*dx + dy*dy);
-        
         if (len < 2) return;
-
-        const headLength = 8 + lineWidth; 
-        const angle = Math.atan2(dy, dx);
-        const headAngle = Math.PI / 9; 
+        const headLength = 8 + lineWidth; const angle = Math.atan2(dy, dx); const headAngle = Math.PI / 9; 
         
-        ctx.save();
-        ctx.globalAlpha = opacity;
-        ctx.strokeStyle = color;
-        ctx.fillStyle = color;
-        ctx.lineWidth = lineWidth;
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-
-        ctx.beginPath();
-        ctx.moveTo(fromX, fromY);
-        ctx.lineTo(toX, toY);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(toX, toY);
+        ctx.save(); ctx.globalAlpha = opacity; ctx.strokeStyle = color; ctx.fillStyle = color;
+        ctx.lineWidth = lineWidth; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(toX, toY);
         ctx.lineTo(toX - headLength * Math.cos(angle - headAngle), toY - headLength * Math.sin(angle - headAngle));
         ctx.lineTo(toX - headLength * Math.cos(angle + headAngle), toY - headLength * Math.sin(angle + headAngle));
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
+        ctx.closePath(); ctx.fill(); ctx.restore();
     }
 
-    // --- BOUCLE D'AFFICHAGE ---
     function draw() {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; 
-        ctx.fillRect(0, 0, width, height);
-        
-        ctx.save();
-        ctx.translate(width / 2, height / 2);
-
-        // PHYSIQUE
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.fillRect(0, 0, width, height);
+        ctx.save(); ctx.translate(width / 2, height / 2);
         updatePhysics();
-        ctx.globalAlpha = 1.0;
-        ctx.setLineDash([]);
+        ctx.globalAlpha = 1.0; ctx.setLineDash([]);
 
-        // --- BARRE ROTATIVE ---
+        // Barre rotative
         let oscAngle = amp * Math.sin(globalTime * freq);
         ctx.beginPath();
-        let bx = R_ring * Math.cos(oscAngle);
-        let by = R_ring * Math.sin(oscAngle);
-        ctx.moveTo(-bx, -by);
-        ctx.lineTo(bx, by);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; 
-        ctx.lineWidth = 4;
-        ctx.stroke();
+        let bx = R_ring * Math.cos(oscAngle); let by = R_ring * Math.sin(oscAngle);
+        ctx.moveTo(-bx, -by); ctx.lineTo(bx, by);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 4; ctx.stroke();
         ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
 
-        // PARTICULES RÉELLES
         if (chkShowReal.checked && N < 250) {
             ctx.fillStyle = '#666';
-            for(let p of particles) {
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 3, 0, Math.PI*2);
-                ctx.fill();
-            }
+            for(let p of particles) { ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); }
         }
 
-        // CALCULS VECTEURS BRUTS
-        let vec_Coulomb = { x: 0, y: 0 };
-        let vec_Radiative = { x: 0, y: 0 };
-        let count = 0;
+        let vec_Coulomb = { x: 0, y: 0 }; let vec_Radiative = { x: 0, y: 0 }; let count = 0;
 
         for(let i=0; i<N; i++) {
             let ret = getRetardedState(i, mouse.x, mouse.y);
             if (ret) {
                 count++;
-                let s = ret.state;
-                let R = ret.R;
-                let n = normalize(ret.vectorR);
-                let beta = { x: s.vx / c, y: s.vy / c };
-                let betaDot = { x: s.ax / c, y: s.ay / c }; 
-                let kappa = 1 - dot(n, beta);
-                if(kappa < 0.01) kappa = 0.01;
+                let s = ret.state; let R = ret.R; let n = normalize(ret.vectorR);
+                let beta = { x: s.vx / c, y: s.vy / c }; let betaDot = { x: s.ax / c, y: s.ay / c }; 
+                let kappa = 1 - dot(n, beta); if(kappa < 0.01) kappa = 0.01;
 
-                // Positions
                 if (chkShowVirtual.checked) {
-                    let dt = R / c;
-                    let virX = s.x + s.vx * dt;
-                    let virY = s.y + s.vy * dt;
+                    let dt = R / c; let virX = s.x + s.vx * dt; let virY = s.y + s.vy * dt;
                     let ptSize = N > 100 ? 1.5 : 2; 
-                    ctx.fillStyle = 'magenta';
-                    ctx.beginPath(); ctx.arc(virX, virY, ptSize, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = 'magenta'; ctx.beginPath(); ctx.arc(virX, virY, ptSize, 0, Math.PI*2); ctx.fill();
                 }
                 if (chkShowRetarded.checked) {
                     let ptSize = N > 100 ? 1.5 : 2.5;
-                    ctx.fillStyle = 'cyan';
-                    ctx.beginPath(); ctx.arc(s.x, s.y, ptSize, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = 'cyan'; ctx.beginPath(); ctx.arc(s.x, s.y, ptSize, 0, Math.PI*2); ctx.fill();
                 }
 
-                // Liénard-Wiechert
                 let gammaApprox = 1 / Math.sqrt(1 - targetBeta*targetBeta);
                 let visualK = K_BASE / (gammaApprox * 0.5 + 0.5); 
-                
-                // Coulomb
                 let n_minus_beta = sub(n, beta);
                 let coeff1 = visualK / (Math.pow(kappa, 3) * Math.pow(R, 2));
-                
-                // Rayonnement
                 let term2Vec = { x: 0, y: 0 };
-                let AC = dot(n, betaDot);
-                let AB = dot(n, n_minus_beta);
+                let AC = dot(n, betaDot); let AB = dot(n, n_minus_beta);
                 term2Vec.x = n_minus_beta.x * AC - betaDot.x * AB;
                 term2Vec.y = n_minus_beta.y * AC - betaDot.y * AB;
                 let coeff2 = visualK / (c * Math.pow(kappa, 3) * R);
 
-                vec_Coulomb.x += n_minus_beta.x * coeff1;
-                vec_Coulomb.y += n_minus_beta.y * coeff1;
-
-                vec_Radiative.x += term2Vec.x * coeff2;
-                vec_Radiative.y += term2Vec.y * coeff2;
+                vec_Coulomb.x += n_minus_beta.x * coeff1; vec_Coulomb.y += n_minus_beta.y * coeff1;
+                vec_Radiative.x += term2Vec.x * coeff2; vec_Radiative.y += term2Vec.y * coeff2;
             }
         }
 
-        // PROJECTION ET DESSIN
         if (count > 0) {
             let mouseDist = Math.sqrt(mouse.x*mouse.x + mouse.y*mouse.y);
-            let u_r = { x: 0, y: 0 };
-            let u_theta = { x: 0, y: 0 };
-
+            let u_r = { x: 0, y: 0 }; let u_theta = { x: 0, y: 0 };
             if (mouseDist > 0.1) {
-                u_r.x = mouse.x / mouseDist;
-                u_r.y = mouse.y / mouseDist;
-                u_theta.x = -u_r.y;
-                u_theta.y = u_r.x;
+                u_r.x = mouse.x / mouseDist; u_r.y = mouse.y / mouseDist;
+                u_theta.x = -u_r.y; u_theta.y = u_r.x;
             }
 
-            // Projections Coulomb
-            let C_rad_val = dot(vec_Coulomb, u_r);
-            let C_orth_val = dot(vec_Coulomb, u_theta);
-            
-            // Projections Rayonnement
-            let R_rad_val = dot(vec_Radiative, u_r);
-            let R_orth_val = dot(vec_Radiative, u_theta);
+            let C_rad_val = dot(vec_Coulomb, u_r); let C_orth_val = dot(vec_Coulomb, u_theta);
+            let R_rad_val = dot(vec_Radiative, u_r); let R_orth_val = dot(vec_Radiative, u_theta);
 
-            // Scaling
             let scaleFactor = N > 10 ? Math.sqrt(10/N) : 1; 
-            let displayScale = 40 * scaleFactor; 
-            let maxLen = 500;
+            let displayScale = 40 * scaleFactor; let maxLen = 500;
 
-            // Construction vecteurs affichage
             let v_C_rad = { x: C_rad_val * u_r.x * displayScale, y: C_rad_val * u_r.y * displayScale };
             let v_C_orth = { x: C_orth_val * u_theta.x * displayScale, y: C_orth_val * u_theta.y * displayScale };
             let v_R_rad = { x: R_rad_val * u_r.x * displayScale, y: R_rad_val * u_r.y * displayScale };
             let v_R_orth = { x: R_orth_val * u_theta.x * displayScale, y: R_orth_val * u_theta.y * displayScale };
 
-            // Clamp visuel
-            function clamp(v) {
-                let l = Math.sqrt(v.x**2 + v.y**2);
-                if(l > maxLen) { v.x *= maxLen/l; v.y *= maxLen/l; }
-                return v;
-            }
+            function clamp(v) { let l = Math.sqrt(v.x**2 + v.y**2); if(l > maxLen) { v.x *= maxLen/l; v.y *= maxLen/l; } return v; }
             clamp(v_C_rad); clamp(v_C_orth); clamp(v_R_rad); clamp(v_R_orth);
 
-            // --- DESSIN SELON CHECKBOXES ---
-            
-            // Famille Coulomb (Vert)
-            if (chkCoulombRad.checked) {
-                drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_C_rad.x, mouse.y + v_C_rad.y, '#00ff00', 1.5, 0.9);
-            }
-            if (chkCoulombOrtho.checked) {
-                drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_C_orth.x, mouse.y + v_C_orth.y, '#66ff66', 1.5, 0.9);
-            }
+            if (chkCoulombRad.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_C_rad.x, mouse.y + v_C_rad.y, '#00ff00', 1.5, 0.9);
+            if (chkCoulombOrtho.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_C_orth.x, mouse.y + v_C_orth.y, '#66ff66', 1.5, 0.9);
+            if (chkRadRad.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_R_rad.x, mouse.y + v_R_rad.y, '#ff3333', 1.5, 0.9);
+            if (chkRadOrtho.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_R_orth.x, mouse.y + v_R_orth.y, '#ff8888', 1.5, 0.9);
 
-            // Famille Rayonnement (Rouge)
-            if (chkRadRad.checked) {
-                drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_R_rad.x, mouse.y + v_R_rad.y, '#ff3333', 1.5, 0.9);
-            }
-            if (chkRadOrtho.checked) {
-                drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_R_orth.x, mouse.y + v_R_orth.y, '#ff8888', 1.5, 0.9);
-            }
-
-            // Somme Totale (Jaune)
             let v_sum = { x: 0, y: 0 };
             if (chkCoulombRad.checked) { v_sum.x += v_C_rad.x; v_sum.y += v_C_rad.y; }
             if (chkCoulombOrtho.checked) { v_sum.x += v_C_orth.x; v_sum.y += v_C_orth.y; }
@@ -545,20 +336,24 @@
             let anyChecked = chkCoulombRad.checked || chkCoulombOrtho.checked || chkRadRad.checked || chkRadOrtho.checked;
 
             if (anyChecked && vSumLen > 0.001) {
+                if (chkShowTrail.checked) {
+                    vectorTrail.push({x: mouse.x + v_sum.x, y: mouse.y + v_sum.y});
+                    if (vectorTrail.length > MAX_TRAIL_LENGTH) vectorTrail.shift();
+                    ctx.beginPath();
+                    for(let k=0; k<vectorTrail.length - 1; k++) {
+                        ctx.moveTo(vectorTrail[k].x, vectorTrail[k].y);
+                        ctx.lineTo(vectorTrail[k+1].x, vectorTrail[k+1].y);
+                    }
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
+                }
+
                 if (vSumLen > 15) {
                     drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_sum.x, mouse.y + v_sum.y, '#ffff00', 2, 1.0);
                 } else {
-                    let dirX = v_sum.x / vSumLen;
-                    let dirY = v_sum.y / vSumLen;
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.setLineDash([5, 5]);
-                    ctx.moveTo(mouse.x, mouse.y);
-                    ctx.lineTo(mouse.x + dirX * 60, mouse.y + dirY * 60);
-                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                    ctx.restore();
+                    let dirX = v_sum.x / vSumLen; let dirY = v_sum.y / vSumLen;
+                    ctx.save(); ctx.beginPath(); ctx.setLineDash([5, 5]);
+                    ctx.moveTo(mouse.x, mouse.y); ctx.lineTo(mouse.x + dirX * 60, mouse.y + dirY * 60);
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
                 }
             }
         }
