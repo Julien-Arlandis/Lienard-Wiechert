@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Champ de Liénard-Wiechert : Induction et Rayonnement</title>
+    <title>Champ de Liénard-Wiechert : Double Formulation Colorée</title>
     
     <script>
     window.MathJax = {
@@ -22,7 +22,8 @@
             background: rgba(30, 30, 30, 0.95); padding: 12px; 
             border: 1px solid #666; border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.8);
-            width: 330px; z-index: 10;
+            width: 340px; 
+            z-index: 10;
             max-height: 95vh; overflow-y: auto;
             font-size: 12px;
             scrollbar-width: thin; scrollbar-color: #555 #222;
@@ -32,10 +33,12 @@
         #controls::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
 
         #equation-box {
-            margin-bottom: 15px; padding: 8px 5px;
+            margin-bottom: 15px; padding: 10px 5px;
             background: rgba(0, 0, 0, 0.4); border: 1px solid #444; border-radius: 6px;
             text-align: center; color: #ddd;
         }
+        
+        .eq-title { font-weight:bold; color:#aaa; font-size:11px; margin-top:8px; margin-bottom:2px; text-transform:uppercase; letter-spacing:1px; }
 
         h3 { margin-top: 0; margin-bottom: 10px; color: #eee; font-size: 15px; text-align: center; line-height: 1.4; }
         hr { border: 0; border-top: 1px solid #555; margin: 10px 0; }
@@ -49,7 +52,7 @@
         .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
         .bar { height: 3px; width: 20px; display: inline-block; margin-right: 8px; border-radius: 2px; }
         .val { color: #fff; font-weight: bold; }
-        mjx-container { font-size: 90% !important; color: #eee !important; overflow-x: hidden; margin: 5px 0 !important; }
+        mjx-container { font-size: 85% !important; color: #eee !important; overflow-x: hidden; margin: 2px 0 !important; }
 
         .info-label { border-bottom: 1px dotted #888; cursor: help; }
         .tooltip {
@@ -68,10 +71,16 @@
 </head>
 <body>
     <div id="controls">
-        <h3>Champ de Liénard-Wiechert :<br>Induction et Rayonnement</h3>
+        <h3>Champ de Liénard-Wiechert :<br>Deux regards sur la physique</h3>
         
         <div id="equation-box">
-            $$ \vec{E} = \underbrace{\color{#00ff00}{ \frac{q (\vec{n} - \vec{\beta})}{4\pi\epsilon_0 \gamma^2 \kappa^3 R^2} }}_{\text{Coulomb}} + \underbrace{\color{#ff3333}{ \frac{q \vec{n} \times [(\vec{n} - \vec{\beta}) \times \dot{\vec{\beta}}]}{4\pi\epsilon_0 c \kappa^3 R} }}_{\text{Rayonnement}} $$
+            <div class="eq-title">1. Formule de Liénard-Wiechert</div>
+            $$ \vec{E} = \frac{q}{4\pi\epsilon_0} \left[ \underbrace{ \color{#00ff00}{ \frac{\vec{n} - \vec{\beta}}{\gamma^2 \kappa^3 R^2} } }_{\text{Coulomb}} + \underbrace{ \color{#ff3333}{ \frac{\vec{n} \times [(\vec{n} - \vec{\beta}) \times \dot{\vec{\beta}}]}{c \kappa^3 R} } }_{\text{Rayonnement}} \right]_{ret} $$
+            
+            <div style="margin: 8px 0; border-top: 1px dashed #555;"></div>
+            
+            <div class="eq-title">2. Formule de Heaviside-Feynman</div>
+            $$ E = \frac{q}{4\pi\epsilon_0} \left[ \underbrace{ \color{#00ff00}{ \frac{e_{r'}}{r'^2} + \frac{r'}{c} \frac{d}{dt} \left( \frac{e_{r'}}{r'^2} \right) } }_{\text{Coulomb}} + \underbrace{ \color{#ff3333}{ \frac{1}{c^2} \frac{d^2}{dt^2} e_{r'} } }_{\text{Rayonnement}} \right] $$
         </div>
         
         <hr>
@@ -201,7 +210,7 @@
     let width, height;
 
     const c = 6;            
-    let R_ring = 150; // Initialisé à 150
+    let R_ring = 150; 
     const K_BASE_REF = 4000;
     const amp = 0.25; 
 
