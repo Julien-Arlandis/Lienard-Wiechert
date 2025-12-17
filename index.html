@@ -6,15 +6,10 @@
     
     <script>
     window.MathJax = {
-      tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']] // Autorise les $ pour les formules en ligne
-      },
-      svg: {
-        fontCache: 'global'
-      }
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
     };
     </script>
-
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
@@ -43,7 +38,7 @@
         }
 
         h3 { margin-top: 0; margin-bottom: 10px; color: #eee; font-size: 15px; text-align: center; line-height: 1.4; }
-        hr { border: 0; border-top: 1px solid #555; margin: 15px 0; }
+        hr { border: 0; border-top: 1px solid #555; margin: 10px 0; }
 
         input[type=range] { vertical-align: middle; cursor: pointer; width: 100%; margin: 5px 0; }
         label { color: #ccc; cursor: pointer; }
@@ -56,32 +51,19 @@
         .val { color: #fff; font-weight: bold; }
         mjx-container { font-size: 90% !important; color: #eee !important; overflow-x: hidden; margin: 5px 0 !important; }
 
-        /* --- TOOLTIPS --- */
         .info-label { border-bottom: 1px dotted #888; cursor: help; }
         .tooltip {
-            visibility: hidden; 
-            width: 260px; 
-            background-color: #1a1a1a; 
-            color: #eee;
-            text-align: left; 
-            border-radius: 6px; 
-            padding: 12px;
-            position: absolute; 
-            z-index: 100; 
-            top: 100%; left: 10px; 
-            margin-top: 5px;
-            border: 1px solid #444; 
-            border-left: 3px solid #00aaff;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.9);
-            opacity: 0; 
-            transition: opacity 0.3s; 
-            font-size: 11px; 
-            line-height: 1.5; 
-            pointer-events: none;
+            visibility: hidden; width: 260px; background-color: #1a1a1a; color: #eee; text-align: left; 
+            border-radius: 6px; padding: 12px; position: absolute; z-index: 100; top: 100%; left: 10px; 
+            margin-top: 5px; border: 1px solid #444; border-left: 3px solid #00aaff;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.9); opacity: 0; transition: opacity 0.3s; 
+            font-size: 11px; line-height: 1.5; pointer-events: none;
         }
         .row:hover .tooltip { visibility: visible; opacity: 1; }
         .tooltip strong { color: #00aaff; display: block; margin-bottom: 5px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 3px; }
         .tooltip em { color: #aaa; display: block; margin-top: 5px; font-style: italic; }
+        
+        .disabled-section { opacity: 0.3; pointer-events: none; transition: opacity 0.3s; }
     </style>
 </head>
 <body>
@@ -97,79 +79,89 @@
         <label for="betaSlider">Vitesse des charges (&beta;=v/c) : <span id="betaValue" class="val">0.30</span></label><br>
         <input type="range" id="betaSlider" min="0.1" max="0.95" step="0.01" value="0.30">
         
-        <label for="nSlider" style="margin-top:2px; display:block;">Nombre de charges : <span id="nValue" class="val">200</span></label>
-        <input type="range" id="nSlider" min="1" max="500" value="200">
-        <div style="font-size:10px; color:#888; margin-top:2px;">(Affichage des charges masqué si N > 350)</div>
+        <label for="nSlider" style="margin-top:2px; display:block;">Nombre de charges : <span id="nValue" class="val">150</span></label>
+        <input type="range" id="nSlider" min="1" max="350" value="150">
 
-        <div class="group-box" style="border: 1px solid #aaa;">
+        <hr>
+        <div style="font-weight:bold; color:#eee; margin-bottom:5px; text-align:center;">MODES DE VISUALISATION</div>
+
+        <div class="group-box" style="border: 1px solid #ffcc00; background:rgba(50,50,0,0.3);">
+            <div class="row">
+                <input type="checkbox" id="chkPauseTrace">
+                <label for="chkPauseTrace" style="color:#ffcc00; font-weight:bold;">Visualiser les lignes de champ</label>
+            </div>
+            <div style="font-size:10px; color:#aaa; margin-left:20px;">(Pause l'animation pour le calcul)</div>
+        </div>
+
+        <div class="group-box" id="boxFieldMap" style="border: 1px solid #aaa; margin-top:5px;">
             <div class="row">
                 <input type="checkbox" id="chkFieldMap">
-                <label for="chkFieldMap" style="color:#fff; font-weight:bold;">Activer la Carte de Champ</label>
-            </div>
-            <div style="font-size:10px; color:#aaa; margin-left:20px; margin-bottom:5px;">
-                (Gourmand en ressources !)
+                <label for="chkFieldMap" style="color:#ccc; font-weight:bold;">Carte du champ électrique</label>
             </div>
         </div>
 
-        <div class="group-box">
-            <div style="font-weight:bold; color:#bbb; margin-bottom:3px;">Position des charges :</div>
+        <div id="mouseSection">
+            <hr>
+            <div style="font-weight:bold; color:#bbb; margin-bottom:3px; text-align:center;">Analyse à la Souris</div>
             
-            <div class="row">
-                <input type="checkbox" id="chkShowReal" checked>
-                <span class="dot" style="background:#888;"></span>
-                <label for="chkShowReal" class="info-label">Réelle (t)</label>
-                <div class="tooltip">
-                    <strong>Charge Réelle (Présent)</strong>
-                    Position physique exacte de la particule à l'instant actuel $t$.<br>
-                    <em>Note : L'information que la particule est ici n'a pas encore eu le temps d'arriver à l'observateur.</em>
-                </div>
-            </div>
-            
-            <div class="row">
-                <input type="checkbox" id="chkShowRetarded">
-                <span class="dot" style="background:cyan;"></span>
-                <label for="chkShowRetarded" class="info-label">Retardée (t')</label>
-                <div class="tooltip">
-                    <strong>Charge Retardée (Passé)</strong>
-                    Position de la particule au temps passé $t' = t - R/c$.<br>
-                    C'est de cet endroit qu'est partie l'onde électromagnétique que l'observateur reçoit maintenant. C'est la "source" réelle du champ.
-                </div>
-            </div>
-            
-            <div class="row">
-                <input type="checkbox" id="chkShowVirtual" checked>
-                <span class="dot" style="background:magenta;"></span>
-                <label for="chkShowVirtual" class="info-label">Virtuelle</label>
-                <div class="tooltip">
-                    <strong>Charge Virtuelle (Extrapolée)</strong>
-                    Position qu'aurait la charge **maintenant** si elle avait continué tout droit à vitesse constante depuis l'émission.<br>
-                    <em>Physique : Le champ électrique "proche" (Coulomb) pointe vers cette position, créant l'illusion que le champ anticipe le mouvement.</em>
-                </div>
-            </div>
-        </div>
-
-        <div id="mouseOptions">
-            <div class="group-box" style="border-left: 3px solid #00ff00;">
-                <div style="font-weight:bold; color:#ccffcc;">Terme Coulomb (1/R²)</div>
-                <div class="sub-group">
-                    <div class="row"><input type="checkbox" id="chkCoulombRad" checked><span class="bar" style="background: #00ff00;"></span><label>Radiale</label></div>
-                    <div class="row"><input type="checkbox" id="chkCoulombOrtho" checked><span class="bar" style="background: #66ff66; opacity:0.7;"></span><label>Orthoradiale</label></div>
-                </div>
-            </div>
-
-            <div class="group-box" style="border-left: 3px solid #ff3333;">
-                <div style="font-weight:bold; color:#ffcccc;">Terme Rayonnement (1/R)</div>
-                <div class="sub-group">
-                    <div class="row"><input type="checkbox" id="chkRadRad" checked><span class="bar" style="background: #ff3333;"></span><label>Radiale</label></div>
-                    <div class="row"><input type="checkbox" id="chkRadOrtho" checked><span class="bar" style="background: #ff8888; opacity:0.7;"></span><label>Orthoradiale</label></div>
-                </div>
-            </div>
-
             <div class="group-box">
-                 <div class="row"><span class="bar" style="background: #ffff00; height:4px;"></span><label style="color: #ffff00;">Champ Total E</label></div>
-                <div class="row" style="margin-top:5px; border-top:1px solid #555; padding-top:5px;">
-                    <input type="checkbox" id="chkShowTrail" checked>
-                    <label for="chkShowTrail" style="font-style:italic;">Afficher la trace</label>
+                <div style="font-weight:bold; color:#bbb; margin-bottom:3px;">Position des charges :</div>
+                
+                <div class="row">
+                    <input type="checkbox" id="chkShowReal" checked>
+                    <span class="dot" style="background:#888;"></span>
+                    <label for="chkShowReal" class="info-label">Réelle (t)</label>
+                    <div class="tooltip">
+                        <strong>Charge Réelle (Présent)</strong>
+                        Position physique exacte de la particule à l'instant actuel $t$.<br>
+                        <em>Note : L'information que la particule est ici n'a pas encore eu le temps d'arriver à l'observateur.</em>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <input type="checkbox" id="chkShowRetarded">
+                    <span class="dot" style="background:cyan;"></span>
+                    <label for="chkShowRetarded" class="info-label">Retardée (t')</label>
+                    <div class="tooltip">
+                        <strong>Charge Retardée (Passé)</strong>
+                        Position de la particule au temps passé $t' = t - R/c$.<br>
+                        C'est de cet endroit qu'est partie l'onde électromagnétique que l'observateur reçoit maintenant. C'est la "source" réelle du champ.
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <input type="checkbox" id="chkShowVirtual" checked>
+                    <span class="dot" style="background:magenta;"></span>
+                    <label for="chkShowVirtual" class="info-label">Virtuelle</label>
+                    <div class="tooltip">
+                        <strong>Charge Virtuelle (Extrapolée)</strong>
+                        Position qu'aurait la charge <strong>maintenant</strong> si elle avait continué tout droit à vitesse constante depuis l'émission.<br>
+                        <em>Physique : Le champ électrique "proche" (Coulomb) pointe vers cette position, créant l'illusion que le champ anticipe le mouvement.</em>
+                    </div>
+                </div>
+            </div>
+
+            <div id="vectorOptions">
+                <div class="group-box" style="border-left: 3px solid #00ff00;">
+                    <div style="font-weight:bold; color:#ccffcc;">Terme Coulomb (1/R²)</div>
+                    <div class="sub-group">
+                        <div class="row"><input type="checkbox" id="chkCoulombRad" checked><span class="bar" style="background: #00ff00;"></span><label>Radiale</label></div>
+                        <div class="row"><input type="checkbox" id="chkCoulombOrtho" checked><span class="bar" style="background: #66ff66; opacity:0.7;"></span><label>Orthoradiale</label></div>
+                    </div>
+                </div>
+                <div class="group-box" style="border-left: 3px solid #ff3333;">
+                    <div style="font-weight:bold; color:#ffcccc;">Terme Rayonnement (1/R)</div>
+                    <div class="sub-group">
+                        <div class="row"><input type="checkbox" id="chkRadRad" checked><span class="bar" style="background: #ff3333;"></span><label>Radiale</label></div>
+                        <div class="row"><input type="checkbox" id="chkRadOrtho" checked><span class="bar" style="background: #ff8888; opacity:0.7;"></span><label>Orthoradiale</label></div>
+                    </div>
+                </div>
+                <div class="group-box">
+                     <div class="row"><span class="bar" style="background: #ffff00; height:4px;"></span><label style="color: #ffff00;">Champ Total E</label></div>
+                    <div class="row" style="margin-top:5px; border-top:1px solid #555; padding-top:5px;">
+                        <input type="checkbox" id="chkShowTrail" checked>
+                        <label for="chkShowTrail" style="font-style:italic;">Afficher la trace (Hodographe)</label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -186,9 +178,11 @@
     const nValue = document.getElementById('nValue');
     const betaSlider = document.getElementById('betaSlider');
     const betaValue = document.getElementById('betaValue');
-    const mouseOptions = document.getElementById('mouseOptions');
+    const mouseSection = document.getElementById('mouseSection');
     
+    const chkPauseTrace = document.getElementById('chkPauseTrace');
     const chkFieldMap = document.getElementById('chkFieldMap');
+    const boxFieldMap = document.getElementById('boxFieldMap'); // Conteneur pour griser
 
     const chkCoulombRad = document.getElementById('chkCoulombRad');
     const chkCoulombOrtho = document.getElementById('chkCoulombOrtho');
@@ -206,12 +200,11 @@
     const K_BASE = 4000;           
     const amp = 0.25; 
 
-    // Initialisation
     let freq = 0.03; 
     let targetBeta = 0.30; 
 
     let mouse = { x: 0, y: 0 };
-    let N = 200; 
+    let N = 150; 
     let particles = [];
     let histories = []; 
     const MAX_HISTORY = 600; 
@@ -219,6 +212,8 @@
     
     let vectorTrail = []; 
     const MAX_TRAIL_LENGTH = 150; 
+
+    let lineSeeds = [];
 
     function initParticles() {
         particles = []; histories = []; vectorTrail = [];
@@ -229,24 +224,55 @@
         }
     }
 
+    function initLineSeeds() {
+        lineSeeds = [];
+        const cols = 25; 
+        const rows = 20;
+        for(let i=0; i<cols; i++) {
+            for(let j=0; j<rows; j++) {
+                let jx = (Math.random()-0.5) * 40;
+                let jy = (Math.random()-0.5) * 40;
+                lineSeeds.push({
+                    x: (i/cols - 0.5) * width * 1.4 + jx,
+                    y: (j/rows - 0.5) * height * 1.4 + jy
+                });
+            }
+        }
+    }
+
     function updateFreq() { freq = (targetBeta * c) / (R_ring * amp); }
 
     nSlider.addEventListener('input', function() { N = parseInt(this.value); nValue.textContent = N; initParticles(); });
     betaSlider.addEventListener('input', function() { targetBeta = parseFloat(this.value); betaValue.textContent = targetBeta.toFixed(2); updateFreq(); });
     
-    chkFieldMap.addEventListener('change', function() {
-        if(this.checked) {
-            mouseOptions.style.opacity = "0.3";
-            mouseOptions.style.pointerEvents = "none";
-        } else {
-            mouseOptions.style.opacity = "1";
-            mouseOptions.style.pointerEvents = "auto";
+    function updateUIVisibility() {
+        // Logique : Si "Lignes" est coché, "Carte" est désactivé
+        if(chkPauseTrace.checked) {
+            boxFieldMap.classList.add('disabled-section');
+            chkFieldMap.disabled = true; // Désactive l'input
+            mouseSection.classList.add('disabled-section'); // Désactive aussi la souris
+        } 
+        else {
+            boxFieldMap.classList.remove('disabled-section');
+            chkFieldMap.disabled = false;
+            
+            // Si "Carte" est coché, la souris est désactivée
+            if(chkFieldMap.checked) {
+                mouseSection.classList.add('disabled-section');
+            } else {
+                mouseSection.classList.remove('disabled-section');
+            }
         }
-    });
+    }
+    
+    chkPauseTrace.addEventListener('change', updateUIVisibility);
+    chkFieldMap.addEventListener('change', updateUIVisibility);
+    updateUIVisibility();
 
     function resize() {
         width = window.innerWidth; height = window.innerHeight;
         canvas.width = width; canvas.height = height;
+        initLineSeeds();
     }
     window.addEventListener('resize', resize); resize();
 
@@ -257,7 +283,7 @@
         vectorTrail = []; 
     });
 
-    updateFreq(); initParticles();
+    updateFreq(); initParticles(); initLineSeeds();
 
     function updatePhysics() {
         globalTime++;
@@ -345,13 +371,87 @@
         ctx.closePath(); ctx.fill(); ctx.restore();
     }
 
+    function drawContinuousStreamlines() {
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = 'rgba(255, 230, 150, 0.6)'; 
+        
+        const MAX_STEPS = 200; 
+        const STEP_SIZE = 8;   
+
+        ctx.beginPath();
+
+        for (let seed of lineSeeds) {
+            let pointsForward = [];
+            let cx = seed.x, cy = seed.y;
+            pointsForward.push({x: cx, y: cy});
+
+            for(let k=0; k<MAX_STEPS; k++) {
+                let field = computeFieldAt(cx, cy);
+                if(field.count === 0) break;
+                
+                let fx = field.total.x; let fy = field.total.y;
+                let mag = Math.sqrt(fx*fx + fy*fy);
+                if(mag < 0.0001) break;
+
+                cx += (fx / mag) * STEP_SIZE;
+                cy += (fy / mag) * STEP_SIZE;
+
+                if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6) break; 
+                let distCenter = Math.sqrt(cx*cx + cy*cy);
+                if(distCenter > R_ring - 15 && distCenter < R_ring + 15) break; 
+
+                pointsForward.push({x: cx, y: cy});
+            }
+
+            let pointsBackward = [];
+            cx = seed.x; cy = seed.y;
+            
+            for(let k=0; k<MAX_STEPS; k++) {
+                let field = computeFieldAt(cx, cy);
+                if(field.count === 0) break;
+                
+                let fx = field.total.x; let fy = field.total.y;
+                let mag = Math.sqrt(fx*fx + fy*fy);
+                if(mag < 0.0001) break;
+
+                cx -= (fx / mag) * STEP_SIZE;
+                cy -= (fy / mag) * STEP_SIZE;
+
+                if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6) break;
+                let distCenter = Math.sqrt(cx*cx + cy*cy);
+                if(distCenter > R_ring - 15 && distCenter < R_ring + 15) break;
+
+                pointsBackward.push({x: cx, y: cy});
+            }
+
+            if(pointsBackward.length > 0) {
+                let start = pointsBackward[pointsBackward.length-1];
+                ctx.moveTo(start.x, start.y);
+                for(let i=pointsBackward.length-2; i>=0; i--) {
+                    ctx.lineTo(pointsBackward[i].x, pointsBackward[i].y);
+                }
+                ctx.lineTo(seed.x, seed.y); 
+            } else {
+                ctx.moveTo(seed.x, seed.y);
+            }
+
+            for(let i=1; i<pointsForward.length; i++) {
+                ctx.lineTo(pointsForward[i].x, pointsForward[i].y);
+            }
+        }
+        ctx.stroke();
+    }
+
     function draw() {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.fillRect(0, 0, width, height);
         ctx.save(); ctx.translate(width / 2, height / 2);
-        updatePhysics();
+        
+        if (!chkPauseTrace.checked) {
+            updatePhysics();
+        }
+
         ctx.globalAlpha = 1.0; ctx.setLineDash([]);
 
-        // Barre rotative
         let oscAngle = amp * Math.sin(globalTime * freq);
         ctx.beginPath();
         let bx = R_ring * Math.cos(oscAngle); let by = R_ring * Math.sin(oscAngle);
@@ -360,39 +460,45 @@
         ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
 
         // --- AFFICHAGE DES CHARGES ---
-        if ((chkShowReal.checked || chkShowRetarded.checked || chkShowVirtual.checked) && N < 350) {
+        // Affiche toujours si N < 350
+        if ((chkShowReal.checked || chkShowRetarded.checked || chkShowVirtual.checked)) {
             for(let i=0; i<N; i++) {
                 let p = particles[i];
                 if(chkShowReal.checked) {
                     ctx.fillStyle = '#666'; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
                 }
                 
-                if(chkShowRetarded.checked || chkShowVirtual.checked) {
-                    let refX = chkFieldMap.checked ? 0 : mouse.x;
-                    let refY = chkFieldMap.checked ? 0 : mouse.y;
-                    let ret = getRetardedState(i, refX, refY);
-                    if(ret) {
-                        if(chkShowRetarded.checked) {
-                            ctx.fillStyle = 'cyan'; ctx.beginPath(); ctx.arc(ret.state.x, ret.state.y, 2, 0, Math.PI*2); ctx.fill();
-                        }
-                        if(chkShowVirtual.checked) {
-                            let dt = ret.R / c;
-                            let virX = ret.state.x + ret.state.vx * dt;
-                            let virY = ret.state.y + ret.state.vy * dt;
-                            ctx.fillStyle = 'magenta'; ctx.beginPath(); ctx.arc(virX, virY, 1.5, 0, Math.PI*2); ctx.fill();
+                if(!chkFieldMap.checked) {
+                    if(chkShowRetarded.checked || chkShowVirtual.checked) {
+                        let refX = chkFieldMap.checked ? 0 : mouse.x;
+                        let refY = chkFieldMap.checked ? 0 : mouse.y;
+                        let ret = getRetardedState(i, refX, refY);
+                        if(ret) {
+                            if(chkShowRetarded.checked) {
+                                ctx.fillStyle = 'cyan'; ctx.beginPath(); ctx.arc(ret.state.x, ret.state.y, 2, 0, Math.PI*2); ctx.fill();
+                            }
+                            if(chkShowVirtual.checked) {
+                                let dt = ret.R / c;
+                                let virX = ret.state.x + ret.state.vx * dt;
+                                let virY = ret.state.y + ret.state.vy * dt;
+                                ctx.fillStyle = 'magenta'; ctx.beginPath(); ctx.arc(virX, virY, 1.5, 0, Math.PI*2); ctx.fill();
+                            }
                         }
                     }
                 }
             }
         }
 
-        // --- MODE 1 : CARTE ---
-        if (chkFieldMap.checked) {
+        // --- MODE 1 : LIGNES CONTINUES (PAUSE) ---
+        if (chkPauseTrace.checked) {
+            drawContinuousStreamlines();
+        }
+
+        // --- MODE 2 : CARTE (GRID) ---
+        else if (chkFieldMap.checked) {
             const step = 40; 
-            const startX = -Math.floor(width/2 / step) * step;
-            const endX = Math.ceil(width/2 / step) * step;
-            const startY = -Math.floor(height/2 / step) * step;
-            const endY = Math.ceil(height/2 / step) * step;
+            const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
+            const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
 
             for (let x = startX; x <= endX; x += step) {
                 for (let y = startY; y <= endY; y += step) {
@@ -401,7 +507,7 @@
                         let vx = field.total.x; let vy = field.total.y;
                         let mag = Math.sqrt(vx*vx + vy*vy);
                         if (mag > 0.0001) {
-                            let intensity = Math.log(mag * 500 + 1) / 4; 
+                            let intensity = Math.log(mag * 300 + 1) / 4; 
                             if(intensity > 1) intensity = 1;
                             let hue = 240 - intensity * 180; 
                             let light = 30 + intensity * 60;
@@ -419,7 +525,7 @@
             }
         } 
         
-        // --- MODE 2 : SOURIS ---
+        // --- MODE 3 : SOURIS (DÉFAUT) ---
         else {
             let field = computeFieldAt(mouse.x, mouse.y);
             if (field.count > 0) {
