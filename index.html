@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Liénard-Wiechert v1.5</title>
+    <title>Liénard-Wiechert v2.0 : Logarithmique & Overlay</title>
     
     <script>
     window.MathJax = {
@@ -39,18 +39,12 @@
             pointer-events: auto;
             font-size: 12px;
             scrollbar-width: thin; scrollbar-color: #555 #222;
-            position: relative; /* Pour positionner la version */
+            position: relative;
         }
 
-        /* --- STYLE DU NUMÉRO DE VERSION --- */
         .version-tag {
-            position: absolute;
-            top: 8px;
-            right: 12px;
-            font-family: monospace;
-            font-size: 10px;
-            color: #666;
-            pointer-events: none;
+            position: absolute; top: 8px; right: 12px;
+            font-family: monospace; font-size: 10px; color: #666; pointer-events: none;
         }
 
         #toggle-btn {
@@ -103,6 +97,10 @@
         
         .symbol-legend { display: flex; justify-content: center; gap: 20px; margin-top: 5px; font-size: 11px; color: #ccc; }
         .sym { font-weight: bold; font-size: 14px; display: inline-block; width: 15px; text-align: center; }
+        .gradient-legend {
+            height: 12px; width: 100%; margin-top: 5px; border-radius: 2px; margin-bottom: 2px;
+            background: linear-gradient(to right, #00ffff, #0000aa, #000000, #aa0000, #ffff00);
+        }
     </style>
 </head>
 <body>
@@ -110,7 +108,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v1.5</div>
+            <div class="version-tag">v2.0 (Log)</div>
 
             <h3>Champ de Liénard-Wiechert :<br>Notation Physique $\odot / \otimes$</h3>
             
@@ -162,6 +160,7 @@
                     <input type="checkbox" id="chkFieldMap">
                     <label for="chkFieldMap" style="color:#ccc; font-weight:bold;">Carte vectorielle du champ E</label>
                 </div>
+                <div style="font-size:10px; color:#aaa; margin-left:20px;">(Flèches proportionnelles log)</div>
             </div>
 
             <hr>
@@ -486,7 +485,6 @@
             ctx.strokeStyle = "#000000";
             ctx.fillStyle = "#000000";
             ctx.lineWidth = lineWidth + 2.5; 
-            
             ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(toX, toY);
             ctx.lineTo(toX - headLength * Math.cos(angle - headAngle), toY - headLength * Math.sin(angle - headAngle));
@@ -549,12 +547,11 @@
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 4; ctx.stroke();
         ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
 
-        // MODE 3 : B-MAP (CERLCES)
         if (chkMagneticMap.checked) {
             const step = 40; 
             const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
             const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
-            const B_SCALE_FACTOR = 800; 
+            const B_SCALE_FACTOR = 800 / Math.sqrt(N); 
             for (let x = startX; x <= endX; x += step) {
                 for (let y = startY; y <= endY; y += step) {
                     let field = computeFieldAt(x, y); let Bz = field.Bz;
@@ -570,25 +567,29 @@
             }
         }
 
-        // MODE 2 : E-MAP (FLECHES PROPORTIONNELLES)
         if (chkFieldMap.checked) {
             const step = 40; 
             const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
             const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
-            
-            const E_SCALE_FACTOR = 2500; 
-            const MAX_ARROW_LEN = step * 0.9; 
-            
+            const MAX_ARROW_LEN = step * 0.95;
+            const saturationK = 0.002 * N; 
+
             for (let x = startX; x <= endX; x += step) {
                 for (let y = startY; y <= endY; y += step) {
                     let rawField = computeFieldAt(x, y); let v = getFilteredVector(rawField, x, y);
                     let mag = Math.sqrt(v.x*v.x + v.y*v.y);
                     
                     if (mag > 0.00005) {
-                        let intensity = Math.log(mag * 300 + 1) / 4; if(intensity > 1) intensity = 1;
-                        let hue = 240 - intensity * 180; let light = 30 + intensity * 60;
+                        let normalizedIntensity = mag / (N * 0.01); 
+                        let intensityColor = Math.log(normalizedIntensity * 300 + 1) / 5; 
+                        if(intensityColor > 1) intensityColor = 1;
+                        let hue = 240 - intensityColor * 180; let light = 30 + intensityColor * 60;
                         let col = `hsl(${hue}, 100%, ${light}%)`;
-                        let len = Math.min(mag * E_SCALE_FACTOR, MAX_ARROW_LEN);
+                        
+                        // LOGARITHMIC LENGTH
+                        // Utilisation du Log pour gérer la dynamique extrême
+                        let len = Math.log(mag * 10000 + 1) * 3;
+                        len = Math.min(len, MAX_ARROW_LEN);
                         
                         if(len > 2) {
                             let dx = (v.x/mag) * len; let dy = (v.y/mag) * len;
@@ -617,38 +618,38 @@
             }
         }
         
-        if (!chkFieldMap.checked && !chkMagneticMap.checked && !chkPauseTrace.checked) {
-            let field = computeFieldAt(mouse.x, mouse.y); let v_filtered = getFilteredVector(field, mouse.x, mouse.y); 
-            if (field.count > 0) {
-                let mouseDist = Math.sqrt(mouse.x*mouse.x + mouse.y*mouse.y);
-                let u_r = { x: 0, y: 0 }; let u_theta = { x: 0, y: 0 };
-                if (mouseDist > 0.1) { u_r.x = mouse.x / mouseDist; u_r.y = mouse.y / mouseDist; u_theta.x = -u_r.y; u_theta.y = u_r.x; }
-                let scaleFactor = N > 10 ? Math.sqrt(10/N) : 1; let displayScale = 40 * scaleFactor; 
-                let v_C_rad = { x: dot(field.coulomb, u_r) * u_r.x * displayScale, y: dot(field.coulomb, u_r) * u_r.y * displayScale };
-                let v_C_orth = { x: dot(field.coulomb, u_theta) * u_theta.x * displayScale, y: dot(field.coulomb, u_theta) * u_theta.y * displayScale };
-                let v_R_rad = { x: dot(field.rad, u_r) * u_r.x * displayScale, y: dot(field.rad, u_r) * u_r.y * displayScale };
-                let v_R_orth = { x: dot(field.rad, u_theta) * u_theta.x * displayScale, y: dot(field.rad, u_theta) * u_theta.y * displayScale };
-                
-                if (chkCoulombRad.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_C_rad.x, mouse.y + v_C_rad.y, '#00ff00', 1.5, 0.9);
-                if (chkCoulombOrtho.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_C_orth.x, mouse.y + v_C_orth.y, '#66ff66', 1.5, 0.9);
-                if (chkRadRad.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_R_rad.x, mouse.y + v_R_rad.y, '#ff3333', 1.5, 0.9);
-                if (chkRadOrtho.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_R_orth.x, mouse.y + v_R_orth.y, '#ff8888', 1.5, 0.9);
+        // --- OVERLAY SOURIS TOUJOURS ACTIF ---
+        let field = computeFieldAt(mouse.x, mouse.y); let v_filtered = getFilteredVector(field, mouse.x, mouse.y); 
+        if (field.count > 0) {
+            let mouseDist = Math.sqrt(mouse.x*mouse.x + mouse.y*mouse.y);
+            let u_r = { x: 0, y: 0 }; let u_theta = { x: 0, y: 0 };
+            if (mouseDist > 0.1) { u_r.x = mouse.x / mouseDist; u_r.y = mouse.y / mouseDist; u_theta.x = -u_r.y; u_theta.y = u_r.x; }
+            let scaleFactor = N > 10 ? Math.sqrt(10/N) : 1; let displayScale = 40 * scaleFactor; 
+            let v_C_rad = { x: dot(field.coulomb, u_r) * u_r.x * displayScale, y: dot(field.coulomb, u_r) * u_r.y * displayScale };
+            let v_C_orth = { x: dot(field.coulomb, u_theta) * u_theta.x * displayScale, y: dot(field.coulomb, u_theta) * u_theta.y * displayScale };
+            let v_R_rad = { x: dot(field.rad, u_r) * u_r.x * displayScale, y: dot(field.rad, u_r) * u_r.y * displayScale };
+            let v_R_orth = { x: dot(field.rad, u_theta) * u_theta.x * displayScale, y: dot(field.rad, u_theta) * u_theta.y * displayScale };
+            
+            if (chkCoulombRad.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_C_rad.x, mouse.y + v_C_rad.y, '#00ff00', 1.5, 0.9);
+            if (chkCoulombOrtho.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_C_orth.x, mouse.y + v_C_orth.y, '#66ff66', 1.5, 0.9);
+            if (chkRadRad.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_R_rad.x, mouse.y + v_R_rad.y, '#ff3333', 1.5, 0.9);
+            if (chkRadOrtho.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_R_orth.x, mouse.y + v_R_orth.y, '#ff8888', 1.5, 0.9);
 
-                let v_sum = { x: v_filtered.x * displayScale, y: v_filtered.y * displayScale };
-                let vSumLen = Math.sqrt(v_sum.x**2 + v_sum.y**2);
-                if (vSumLen > 0.001) {
-                    if (chkShowTrail.checked) {
-                        vectorTrail.push({x: mouse.x + v_sum.x, y: mouse.y + v_sum.y});
-                        if (vectorTrail.length > MAX_TRAIL_LENGTH) vectorTrail.shift();
-                        ctx.beginPath();
-                        for(let k=0; k<vectorTrail.length - 1; k++) { ctx.moveTo(vectorTrail[k].x, vectorTrail[k].y); ctx.lineTo(vectorTrail[k+1].x, vectorTrail[k+1].y); }
-                        ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
-                    }
-                    if (vSumLen > 15) { drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_sum.x, mouse.y + v_sum.y, '#ffff00', 2, 1.0); }
-                    else { let dirX = v_sum.x / vSumLen; let dirY = v_sum.y / vSumLen; ctx.save(); ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.moveTo(mouse.x, mouse.y); ctx.lineTo(mouse.x + dirX * 60, mouse.y + dirY * 60); ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); }
+            let v_sum = { x: v_filtered.x * displayScale, y: v_filtered.y * displayScale };
+            let vSumLen = Math.sqrt(v_sum.x**2 + v_sum.y**2);
+            if (vSumLen > 0.001) {
+                if (chkShowTrail.checked) {
+                    vectorTrail.push({x: mouse.x + v_sum.x, y: mouse.y + v_sum.y});
+                    if (vectorTrail.length > MAX_TRAIL_LENGTH) vectorTrail.shift();
+                    ctx.beginPath();
+                    for(let k=0; k<vectorTrail.length - 1; k++) { ctx.moveTo(vectorTrail[k].x, vectorTrail[k].y); ctx.lineTo(vectorTrail[k+1].x, vectorTrail[k+1].y); }
+                    ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
                 }
+                if (vSumLen > 15) { drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_sum.x, mouse.y + v_sum.y, '#ffff00', 2, 1.0); }
+                else { let dirX = v_sum.x / vSumLen; let dirY = v_sum.y / vSumLen; ctx.save(); ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.moveTo(mouse.x, mouse.y); ctx.lineTo(mouse.x + dirX * 60, mouse.y + dirY * 60); ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); }
             }
         }
+        
         ctx.restore();
         requestAnimationFrame(draw);
     }
