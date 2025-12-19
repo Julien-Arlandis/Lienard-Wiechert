@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Liénard-Wiechert : Vecteurs Proportionnels</title>
+    <title>Liénard-Wiechert v1.5</title>
     
     <script>
     window.MathJax = {
@@ -39,6 +39,18 @@
             pointer-events: auto;
             font-size: 12px;
             scrollbar-width: thin; scrollbar-color: #555 #222;
+            position: relative; /* Pour positionner la version */
+        }
+
+        /* --- STYLE DU NUMÉRO DE VERSION --- */
+        .version-tag {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-family: monospace;
+            font-size: 10px;
+            color: #666;
+            pointer-events: none;
         }
 
         #toggle-btn {
@@ -61,7 +73,7 @@
         
         .eq-title { font-weight:bold; color:#aaa; font-size:11px; margin-top:8px; margin-bottom:2px; text-transform:uppercase; letter-spacing:1px; }
 
-        h3 { margin-top: 0; margin-bottom: 10px; color: #eee; font-size: 15px; text-align: center; line-height: 1.4; }
+        h3 { margin-top: 0; margin-bottom: 10px; color: #eee; font-size: 15px; text-align: center; line-height: 1.4; margin-right: 20px; }
         hr { border: 0; border-top: 1px solid #555; margin: 10px 0; }
 
         input[type=range] { vertical-align: middle; cursor: pointer; width: 100%; margin: 5px 0; }
@@ -98,6 +110,8 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
+            <div class="version-tag">v1.5</div>
+
             <h3>Champ de Liénard-Wiechert :<br>Notation Physique $\odot / \otimes$</h3>
             
             <div id="equation-box">
@@ -148,7 +162,6 @@
                     <input type="checkbox" id="chkFieldMap">
                     <label for="chkFieldMap" style="color:#ccc; font-weight:bold;">Carte vectorielle du champ E</label>
                 </div>
-                <div style="font-size:10px; color:#aaa; margin-left:20px;">(Flèches proportionnelles à l'amplitude)</div>
             </div>
 
             <hr>
@@ -462,7 +475,6 @@
         return finalVec;
     }
 
-    // --- CORRECTION FLÈCHES VISIBLES ---
     function drawArrow(ctx, fromX, fromY, toX, toY, color, lineWidth, opacity = 1.0) {
         if (!isFinite(toX) || !isFinite(toY)) return;
         const dx = toX - fromX; const dy = toY - fromY; const len = Math.sqrt(dx*dx + dy*dy); if (len < 2) return;
@@ -470,29 +482,23 @@
         
         ctx.save(); ctx.globalAlpha = opacity; 
         
-        // 1. CONTOUR NOIR (SI B-MAP ACTIVE)
         if(chkMagneticMap.checked) {
             ctx.strokeStyle = "#000000";
             ctx.fillStyle = "#000000";
-            ctx.lineWidth = lineWidth + 2.5; // Contour épais
+            ctx.lineWidth = lineWidth + 2.5; 
             
-            // Tige
             ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
-            // Tête (Triangle plein)
             ctx.beginPath(); ctx.moveTo(toX, toY);
             ctx.lineTo(toX - headLength * Math.cos(angle - headAngle), toY - headLength * Math.sin(angle - headAngle));
             ctx.lineTo(toX - headLength * Math.cos(angle + headAngle), toY - headLength * Math.sin(angle + headAngle));
             ctx.closePath(); ctx.fill(); ctx.stroke();
         }
 
-        // 2. COULEUR (TOUJOURS VISIBLE)
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
         ctx.lineWidth = lineWidth;
 
-        // Tige
         ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
-        // Tête
         ctx.beginPath(); ctx.moveTo(toX, toY);
         ctx.lineTo(toX - headLength * Math.cos(angle - headAngle), toY - headLength * Math.sin(angle - headAngle));
         ctx.lineTo(toX - headLength * Math.cos(angle + headAngle), toY - headLength * Math.sin(angle + headAngle));
@@ -570,26 +576,20 @@
             const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
             const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
             
-            // Paramètres pour l'échelle proportionnelle
-            const E_SCALE_FACTOR = 2500; // Facteur d'échelle (à ajuster selon visualK)
-            const MAX_ARROW_LEN = step * 0.9; // Max 90% de la case
+            const E_SCALE_FACTOR = 2500; 
+            const MAX_ARROW_LEN = step * 0.9; 
             
             for (let x = startX; x <= endX; x += step) {
                 for (let y = startY; y <= endY; y += step) {
                     let rawField = computeFieldAt(x, y); let v = getFilteredVector(rawField, x, y);
                     let mag = Math.sqrt(v.x*v.x + v.y*v.y);
                     
-                    // Seuil minimal pour éviter le bruit
                     if (mag > 0.00005) {
-                        // 1. Calcul de la couleur (Intensité logarithmique pour la couleur)
                         let intensity = Math.log(mag * 300 + 1) / 4; if(intensity > 1) intensity = 1;
                         let hue = 240 - intensity * 180; let light = 30 + intensity * 60;
                         let col = `hsl(${hue}, 100%, ${light}%)`;
-
-                        // 2. Calcul de la longueur (Proportionnelle avec seuil)
                         let len = Math.min(mag * E_SCALE_FACTOR, MAX_ARROW_LEN);
                         
-                        // Si la flèche est trop petite, on ne la dessine pas (optionnel)
                         if(len > 2) {
                             let dx = (v.x/mag) * len; let dy = (v.y/mag) * len;
                             drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, col, 1.5, 1.0);
