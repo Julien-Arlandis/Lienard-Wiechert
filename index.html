@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Liénard-Wiechert v2.8 : E Blanc & Dynamique</title>
+    <title>Liénard-Wiechert v3.3 : Logarithmique Normalisé</title>
     
     <script>
     window.MathJax = {
@@ -105,7 +105,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v2.8</div>
+            <div class="version-tag">v3.3</div>
 
             <h3>Liénard-Wiechert :<br>Formules & Visualisation</h3>
             
@@ -172,15 +172,27 @@
                 <div style="font-weight:bold; color:#bbb; margin-bottom:3px;">Position des charges :</div>
                 <div class="row">
                     <input type="checkbox" id="chkShowReal" checked><span class="dot" style="background:#888;"></span><label for="chkShowReal" class="info-label">Réelle (t)</label>
-                    <div class="tooltip"><strong>Charge Réelle</strong>Position physique actuelle.</div>
+                    <div class="tooltip">
+                        <strong>Charge Réelle (Présent)</strong>
+                        Position physique exacte de la particule à l'instant actuel $t$.<br>
+                        <em>Note : L'information que la particule est ici n'a pas encore eu le temps d'arriver à l'observateur.</em>
+                    </div>
                 </div>
                 <div class="row">
                     <input type="checkbox" id="chkShowRetarded"><span class="dot" style="background:cyan;"></span><label for="chkShowRetarded" class="info-label">Retardée (t')</label>
-                    <div class="tooltip"><strong>Charge Retardée</strong>Position d'émission de l'onde.</div>
+                    <div class="tooltip">
+                        <strong>Charge Retardée (Passé)</strong>
+                        Position de la particule au temps passé $t' = t - R/c$.<br>
+                        C'est de cet endroit qu'est partie l'onde électromagnétique que l'observateur reçoit maintenant.
+                    </div>
                 </div>
                 <div class="row">
                     <input type="checkbox" id="chkShowVirtual" checked><span class="dot" style="background:magenta;"></span><label for="chkShowVirtual" class="info-label">Virtuelle</label>
-                    <div class="tooltip"><strong>Charge Virtuelle</strong>Position extrapolée (vitesse constante).</div>
+                    <div class="tooltip">
+                        <strong>Charge Virtuelle (Extrapolée)</strong>
+                        Position qu'aurait la charge <strong>maintenant</strong> si elle avait continué tout droit à vitesse constante.<br>
+                        <em>Physique : Le champ électrique "proche" pointe vers cette position.</em>
+                    </div>
                 </div>
             </div>
 
@@ -218,6 +230,7 @@
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
     
+    // UI Elements
     const controls = document.getElementById('controls');
     const toggleBtn = document.getElementById('toggle-btn');
     
@@ -508,7 +521,7 @@
 
             let safeN = Math.max(N, 1); 
 
-            // 1. CARTE B (Fond)
+            // 1. CARTE B
             if (chkMagneticMap.checked) {
                 const step = 40; 
                 const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
@@ -529,48 +542,45 @@
                 }
             }
 
-            // 2. CARTE E (Blanc, Power Law Scale)
+            // 2. CARTE E (Blanc, Log Scale)
             if (chkFieldMap.checked) {
                 const step = 40; 
                 const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
                 const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
                 const MAX_ARROW_LEN = step * 0.95;
                 
-                // POWER LAW + NORM pour voir les variations
-                const SCALE_FACTOR = 3000 / safeN; 
-
                 for (let x = startX; x <= endX; x += step) {
                     for (let y = startY; y <= endY; y += step) {
                         let rawField = computeFieldAt(x, y); let v = getFilteredVector(rawField, x, y);
                         let mag = Math.sqrt(v.x*v.x + v.y*v.y);
                         
                         if (mag > 0.00005) {
-                            let scaledMag = mag * SCALE_FACTOR; 
-                            // Compression 0.3 pour voir les champs faibles ET forts
-                            let ratio = Math.pow(scaledMag, 0.3); 
-                            if(ratio > 1) ratio = 1; 
+                            // LOG SCALING : (Mag / N) to normalize, then Log.
+                            let magPerCharge = mag / safeN;
+                            let intensity = Math.log(1 + magPerCharge * 500); // 500 = gain visuel
+                            let ratio = intensity / 4.0; // Calibration : log(1 + high) ~ 4
+                            if(ratio > 1) ratio = 1;
                             
                             let len = ratio * MAX_ARROW_LEN;
-                            
+                            let width = 1 + 2 * (len / MAX_ARROW_LEN); 
+
                             if(len > 3) {
                                 let dx = (v.x/mag) * len; let dy = (v.y/mag) * len;
-                                // TOUJOURS BLANC (0.8 opacity)
-                                if (chkMagneticMap.checked || chkPoynting.checked) drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#FFFFFF', 1.5, 0.8, true);
-                                drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#FFFFFF', 1.5, 0.8, false);
+                                if (chkMagneticMap.checked || chkPoynting.checked) drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#FFFFFF', width, 0.8, true);
+                                drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#FFFFFF', width, 0.8, false);
                             }
                         }
                     }
                 }
             }
 
-            // 3. CARTE S (Vert)
+            // 3. CARTE S (Vert Fin, Log(Sqrt) Scale)
             if (chkPoynting.checked) {
                 const step = 40; 
                 const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
                 const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
-                const MAX_S_LEN = step * 0.95;
-                const S_SCALE = 30000 / (safeN*safeN);
-
+                const MAX_S_LEN = step * 0.9;
+                
                 for (let x = startX; x <= endX; x += step) {
                     for (let y = startY; y <= endY; y += step) {
                         let field = computeFieldAt(x, y); 
@@ -579,14 +589,24 @@
                         let Smag = Math.sqrt(Sx*Sx + Sy*Sy);
 
                         if (Smag > 0.000001) {
-                            let ratio = Math.pow(Smag * S_SCALE, 0.4); 
+                            // HYBRID SCALING POUR P
+                            // P ~ E^2. Pour avoir une dynamique similaire à E, on prend sqrt(P) puis log.
+                            let SmagRoot = Math.sqrt(Smag);
+                            let normalizedS = SmagRoot / safeN; 
+                            
+                            let intensity = Math.log(1 + normalizedS * 500); 
+                            let ratio = intensity / 4.0;
                             if(ratio > 1) ratio = 1;
+                            
                             let len = ratio * MAX_S_LEN;
+                            
+                            // Width plus fine : 0.5 à 1.5px
+                            let width = 0.5 + 1.0 * (len / MAX_S_LEN);
 
                             if (len > 3) {
                                 let dx = (Sx/Smag) * len; let dy = (Sy/Smag) * len;
-                                if (chkMagneticMap.checked || chkFieldMap.checked) drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#00FF00', 1.8, 0.9, true);
-                                drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#00FF00', 1.8, 0.9, false);
+                                if (chkMagneticMap.checked || chkFieldMap.checked) drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#00FF00', width, 0.9, true);
+                                drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#00FF00', width, 0.9, false);
                             }
                         }
                     }
@@ -617,7 +637,8 @@
                     let mouseDist = Math.sqrt(mouse.x*mouse.x + mouse.y*mouse.y);
                     let u_r = { x: 0, y: 0 }; let u_theta = { x: 0, y: 0 };
                     if (mouseDist > 0.1) { u_r.x = mouse.x / mouseDist; u_r.y = mouse.y / mouseDist; u_theta.x = -u_r.y; u_theta.y = u_r.x; }
-                    let scaleFactor = N > 10 ? Math.sqrt(10/N) : 1; let displayScale = 40 * scaleFactor; 
+                    let displayScale = 40 * Math.sqrt(10/safeN); 
+                    
                     let v_C_rad = { x: dot(field.coulomb, u_r) * u_r.x * displayScale, y: dot(field.coulomb, u_r) * u_r.y * displayScale };
                     let v_C_orth = { x: dot(field.coulomb, u_theta) * u_theta.x * displayScale, y: dot(field.coulomb, u_theta) * u_theta.y * displayScale };
                     let v_R_rad = { x: dot(field.rad, u_r) * u_r.x * displayScale, y: dot(field.rad, u_r) * u_r.y * displayScale };
