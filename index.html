@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Liénard-Wiechert v2.0 : Logarithmique & Overlay</title>
+    <title>Liénard-Wiechert v2.1 : Variation Visible</title>
     
     <script>
     window.MathJax = {
@@ -108,7 +108,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v2.0 (Log)</div>
+            <div class="version-tag">v2.1 (PowerLaw)</div>
 
             <h3>Champ de Liénard-Wiechert :<br>Notation Physique $\odot / \otimes$</h3>
             
@@ -160,7 +160,7 @@
                     <input type="checkbox" id="chkFieldMap">
                     <label for="chkFieldMap" style="color:#ccc; font-weight:bold;">Carte vectorielle du champ E</label>
                 </div>
-                <div style="font-size:10px; color:#aaa; margin-left:20px;">(Flèches proportionnelles log)</div>
+                <div style="font-size:10px; color:#aaa; margin-left:20px;">(Flèches proportionnelles V2.1)</div>
             </div>
 
             <hr>
@@ -571,8 +571,13 @@
             const step = 40; 
             const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
             const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
+            
             const MAX_ARROW_LEN = step * 0.95;
-            const saturationK = 0.002 * N; 
+            
+            // --- NOUVELLE LOGIQUE V2.1 (Power Law + Normalisation par N) ---
+            // 1. On normalise par N pour éviter que 150 charges saturent tout.
+            // 2. On utilise une puissance (0.4) pour compresser la dynamique sans aplatir.
+            const SCALE_FACTOR = 4000 / N; 
 
             for (let x = startX; x <= endX; x += step) {
                 for (let y = startY; y <= endY; y += step) {
@@ -580,16 +585,20 @@
                     let mag = Math.sqrt(v.x*v.x + v.y*v.y);
                     
                     if (mag > 0.00005) {
-                        let normalizedIntensity = mag / (N * 0.01); 
-                        let intensityColor = Math.log(normalizedIntensity * 300 + 1) / 5; 
+                        // COULEUR
+                        let normMagColor = mag / (N * 0.01); 
+                        let intensityColor = Math.log(normMagColor * 300 + 1) / 5; 
                         if(intensityColor > 1) intensityColor = 1;
                         let hue = 240 - intensityColor * 180; let light = 30 + intensityColor * 60;
                         let col = `hsl(${hue}, 100%, ${light}%)`;
                         
-                        // LOGARITHMIC LENGTH
-                        // Utilisation du Log pour gérer la dynamique extrême
-                        let len = Math.log(mag * 10000 + 1) * 3;
-                        len = Math.min(len, MAX_ARROW_LEN);
+                        // LONGUEUR (POWER LAW)
+                        let scaledMag = mag * SCALE_FACTOR; 
+                        // x^0.4 donne une belle courbe de réponse (sensible aux faibles, douce aux forts)
+                        let lenRatio = Math.pow(scaledMag, 0.4);
+                        if(lenRatio > 1) lenRatio = 1; // Saturation ultime
+                        
+                        let len = lenRatio * MAX_ARROW_LEN;
                         
                         if(len > 2) {
                             let dx = (v.x/mag) * len; let dy = (v.y/mag) * len;
