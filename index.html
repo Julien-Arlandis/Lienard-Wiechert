@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Liénard-Wiechert : Visualisation Complète</title>
+    <title>Liénard-Wiechert : Vecteurs Proportionnels</title>
     
     <script>
     window.MathJax = {
@@ -148,6 +148,7 @@
                     <input type="checkbox" id="chkFieldMap">
                     <label for="chkFieldMap" style="color:#ccc; font-weight:bold;">Carte vectorielle du champ E</label>
                 </div>
+                <div style="font-size:10px; color:#aaa; margin-left:20px;">(Flèches proportionnelles à l'amplitude)</div>
             </div>
 
             <hr>
@@ -563,21 +564,36 @@
             }
         }
 
-        // MODE 2 : E-MAP (FLECHES)
+        // MODE 2 : E-MAP (FLECHES PROPORTIONNELLES)
         if (chkFieldMap.checked) {
             const step = 40; 
             const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
             const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
+            
+            // Paramètres pour l'échelle proportionnelle
+            const E_SCALE_FACTOR = 2500; // Facteur d'échelle (à ajuster selon visualK)
+            const MAX_ARROW_LEN = step * 0.9; // Max 90% de la case
+            
             for (let x = startX; x <= endX; x += step) {
                 for (let y = startY; y <= endY; y += step) {
                     let rawField = computeFieldAt(x, y); let v = getFilteredVector(rawField, x, y);
                     let mag = Math.sqrt(v.x*v.x + v.y*v.y);
-                    if (mag > 0.0001) {
+                    
+                    // Seuil minimal pour éviter le bruit
+                    if (mag > 0.00005) {
+                        // 1. Calcul de la couleur (Intensité logarithmique pour la couleur)
                         let intensity = Math.log(mag * 300 + 1) / 4; if(intensity > 1) intensity = 1;
                         let hue = 240 - intensity * 180; let light = 30 + intensity * 60;
-                        let len = 15; let dx = (v.x/mag) * len; let dy = (v.y/mag) * len;
                         let col = `hsl(${hue}, 100%, ${light}%)`;
-                        drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, col, 1.5, 1.0);
+
+                        // 2. Calcul de la longueur (Proportionnelle avec seuil)
+                        let len = Math.min(mag * E_SCALE_FACTOR, MAX_ARROW_LEN);
+                        
+                        // Si la flèche est trop petite, on ne la dessine pas (optionnel)
+                        if(len > 2) {
+                            let dx = (v.x/mag) * len; let dy = (v.y/mag) * len;
+                            drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, col, 1.5, 1.0);
+                        }
                     }
                 }
             }
