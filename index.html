@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Liénard-Wiechert v3.3 : Logarithmique Normalisé</title>
+    <title>Liénard-Wiechert v3.4 : URL Fix & Log Scale</title>
     
     <script>
     window.MathJax = {
@@ -105,7 +105,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v3.3</div>
+            <div class="version-tag">v3.4 (URL Fix)</div>
 
             <h3>Liénard-Wiechert :<br>Formules & Visualisation</h3>
             
@@ -280,13 +280,28 @@
         toggleBtn.textContent = controls.classList.contains('collapsed') ? '▶' : '◀';
     });
 
+    // --- CORRECTION URL ---
     function updateURL() {
         const params = new URLSearchParams();
         params.set('beta', betaSlider.value); params.set('n', nSlider.value); params.set('r', rSlider.value);
+        
+        // Visualisation Modes
         params.set('lines', chkPauseTrace.checked ? '1' : '0');
         params.set('emap', chkFieldMap.checked ? '1' : '0');
         params.set('bmap', chkMagneticMap.checked ? '1' : '0');
         params.set('smap', chkPoynting.checked ? '1' : '0');
+        
+        // Charges
+        params.set('real', chkShowReal.checked ? '1' : '0');
+        params.set('ret', chkShowRetarded.checked ? '1' : '0');
+        params.set('virt', chkShowVirtual.checked ? '1' : '0');
+        
+        // Components Filters
+        params.set('crad', chkCoulombRad.checked ? '1' : '0');
+        params.set('corth', chkCoulombOrtho.checked ? '1' : '0');
+        params.set('rrad', chkRadRad.checked ? '1' : '0');
+        params.set('rorth', chkRadOrtho.checked ? '1' : '0');
+        
         window.history.replaceState({}, '', `${location.pathname}?${params}`);
     }
 
@@ -296,10 +311,20 @@
         if(params.has('beta')) { let val = parseFloat(params.get('beta')); betaSlider.value = val; targetBeta = val; betaValue.textContent = val.toFixed(2); }
         if(params.has('n')) { let val = parseInt(params.get('n')); nSlider.value = val; N = val; nValue.textContent = val; }
         if(params.has('r')) { let val = parseInt(params.get('r')); rSlider.value = val; R_ring = val; rValue.textContent = val; }
+        
         if(params.has('lines')) chkPauseTrace.checked = (params.get('lines') === '1');
         if(params.has('emap')) chkFieldMap.checked = (params.get('emap') === '1');
         if(params.has('bmap')) chkMagneticMap.checked = (params.get('bmap') === '1');
         if(params.has('smap')) chkPoynting.checked = (params.get('smap') === '1');
+        
+        if(params.has('real')) chkShowReal.checked = (params.get('real') === '1');
+        if(params.has('ret')) chkShowRetarded.checked = (params.get('ret') === '1');
+        if(params.has('virt')) chkShowVirtual.checked = (params.get('virt') === '1');
+        
+        if(params.has('crad')) chkCoulombRad.checked = (params.get('crad') === '1');
+        if(params.has('corth')) chkCoulombOrtho.checked = (params.get('corth') === '1');
+        if(params.has('rrad')) chkRadRad.checked = (params.get('rrad') === '1');
+        if(params.has('rorth')) chkRadOrtho.checked = (params.get('rorth') === '1');
     }
 
     function initParticles() {
@@ -555,10 +580,9 @@
                         let mag = Math.sqrt(v.x*v.x + v.y*v.y);
                         
                         if (mag > 0.00005) {
-                            // LOG SCALING : (Mag / N) to normalize, then Log.
                             let magPerCharge = mag / safeN;
-                            let intensity = Math.log(1 + magPerCharge * 500); // 500 = gain visuel
-                            let ratio = intensity / 4.0; // Calibration : log(1 + high) ~ 4
+                            let intensity = Math.log(1 + magPerCharge * 500); 
+                            let ratio = intensity / 4.0; 
                             if(ratio > 1) ratio = 1;
                             
                             let len = ratio * MAX_ARROW_LEN;
@@ -589,8 +613,6 @@
                         let Smag = Math.sqrt(Sx*Sx + Sy*Sy);
 
                         if (Smag > 0.000001) {
-                            // HYBRID SCALING POUR P
-                            // P ~ E^2. Pour avoir une dynamique similaire à E, on prend sqrt(P) puis log.
                             let SmagRoot = Math.sqrt(Smag);
                             let normalizedS = SmagRoot / safeN; 
                             
@@ -599,8 +621,6 @@
                             if(ratio > 1) ratio = 1;
                             
                             let len = ratio * MAX_S_LEN;
-                            
-                            // Width plus fine : 0.5 à 1.5px
                             let width = 0.5 + 1.0 * (len / MAX_S_LEN);
 
                             if (len > 3) {
