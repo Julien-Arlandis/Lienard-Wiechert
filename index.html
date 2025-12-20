@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Liénard-Wiechert v3.4 : URL Fix & Log Scale</title>
+    <title>Heaviside-Feynman v4.8</title>
     
     <script>
     window.MathJax = {
@@ -19,14 +19,13 @@
         
         #controls { 
             position: absolute; top: 10px; left: 10px; 
-            width: 350px; 
+            width: 360px; 
             z-index: 10;
             transition: transform 0.3s ease-in-out;
             overflow: visible; 
             pointer-events: none;
         }
-
-        #controls.collapsed { transform: translateX(-370px); }
+        #controls.collapsed { transform: translateX(-380px); }
 
         #panel-content {
             background: rgba(20, 20, 20, 0.95); 
@@ -34,13 +33,47 @@
             border: 1px solid #555; 
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.9);
-            max-height: 95vh; 
+            max-height: 90vh; 
             overflow-y: auto;
             pointer-events: auto;
             font-size: 12px;
             scrollbar-width: thin; scrollbar-color: #555 #222;
             position: relative;
         }
+
+        #zoom-controls {
+            position: absolute; top: 20px; right: 20px;
+            display: flex; flex-direction: column; gap: 5px;
+            z-index: 20;
+        }
+        .zoom-btn {
+            width: 40px; height: 40px;
+            background: rgba(50, 50, 50, 0.8);
+            color: white; border: 1px solid #777; border-radius: 50%;
+            font-size: 24px; font-weight: bold; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s; user-select: none;
+        }
+        .zoom-btn:hover { background: #00aaff; border-color: #fff; }
+        .zoom-btn:active { transform: scale(0.95); }
+
+        #scope-container {
+            position: absolute; bottom: 20px; right: 20px;
+            width: 320px; height: 180px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #555; border-radius: 8px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.8);
+            z-index: 20; pointer-events: none;
+            display: none; 
+            flex-direction: column;
+        }
+        #scope-header {
+            background: #222; color: #ccc; padding: 5px 10px; font-size: 11px;
+            border-bottom: 1px solid #555; border-radius: 6px 6px 0 0;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        #scopeCanvas { width: 100%; height: 100%; border-radius: 0 0 6px 6px; }
+        .legend-item { display: inline-block; margin-left: 10px; font-weight: bold; font-family: monospace; font-size: 12px; }
 
         .version-tag {
             position: absolute; top: 8px; right: 12px;
@@ -64,7 +97,6 @@
             background: rgba(0, 0, 0, 0.6); border: 1px solid #444; border-radius: 6px;
             text-align: center; color: #ddd;
         }
-        
         .eq-title { font-weight:bold; color:#aaa; font-size:10px; margin-top:8px; margin-bottom:2px; text-transform:uppercase; letter-spacing:1px; }
         .eq-sep { margin: 8px 0; border-top: 1px dashed #444; }
 
@@ -76,7 +108,7 @@
         .group-box { margin-top: 8px; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 5px; border: 1px solid #444; }
         .sub-group { margin-left: 15px; border-left: 2px solid #555; padding-left: 5px; margin-top: 2px; }
         .row { display: flex; align-items: center; margin-bottom: 3px; position: relative; }
-        input[type=checkbox] { margin-right: 6px; transform: scale(1.0); cursor: pointer; }
+        input[type=checkbox], input[type=radio] { margin-right: 6px; transform: scale(1.0); cursor: pointer; }
         .dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
         .bar { height: 3px; width: 20px; display: inline-block; margin-right: 8px; border-radius: 2px; }
         .val { color: #fff; font-weight: bold; }
@@ -93,43 +125,51 @@
         .row:hover .tooltip { visibility: visible; opacity: 1; }
         .tooltip strong { color: #00aaff; display: block; margin-bottom: 5px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 3px; }
         .tooltip em { color: #aaa; display: block; margin-top: 5px; font-style: italic; }
-        
         .disabled-section { opacity: 0.3; pointer-events: none; transition: opacity 0.3s; }
-        
-        .symbol-legend { display: flex; justify-content: center; gap: 20px; margin-top: 5px; font-size: 11px; color: #ccc; }
-        .sym { font-weight: bold; font-size: 14px; display: inline-block; width: 15px; text-align: center; }
+        .radio-group { display: flex; justify-content: space-around; margin-top: 5px; }
     </style>
 </head>
 <body>
+    <div id="zoom-controls">
+        <div class="zoom-btn" id="btnZoomIn" title="Zoomer (Agrandir)">+</div>
+        <div class="zoom-btn" id="btnZoomOut" title="Dézoomer (Réduire)">-</div>
+    </div>
+
     <div id="controls">
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v3.4 (URL Fix)</div>
+            <div class="version-tag">v4.8</div>
 
-            <h3>Liénard-Wiechert :<br>Formules & Visualisation</h3>
+            <h3>Visualisation Relativiste</h3>
             
             <div id="equation-box">
-                <div class="eq-title">1. Formule de Liénard-Wiechert</div>
-                $$ \vec{E} = \frac{q}{4\pi\epsilon_0} \left[ \underbrace{ \color{#00ff00}{ \frac{\vec{n} - \vec{\beta}}{\gamma^2 \kappa^3 R^2} } }_{\text{Coulomb}} + \underbrace{ \color{#ff3333}{ \frac{\vec{n} \times [(\vec{n} - \vec{\beta}) \times \dot{\vec{\beta}}]}{c \kappa^3 R} } }_{\text{Rayonnement}} \right]_{ret} $$
-                
-                <div class="eq-sep"></div>
-                
-                <div class="eq-title">2. Formule de Heaviside-Feynman</div>
+                <div class="eq-title">Formule de Heaviside-Feynman</div>
                 $$ E = \frac{q}{4\pi\epsilon_0} \left[ \underbrace{ \color{#00ff00}{ \frac{e_{r'}}{r'^2} + \frac{r'}{c} \frac{d}{dt} \left( \frac{e_{r'}}{r'^2} \right) } }_{\text{Coulomb}} + \underbrace{ \color{#ff3333}{ \frac{1}{c^2} \frac{d^2}{dt^2} e_{r'} } }_{\text{Rayonnement}} \right] $$
-
-                <div class="eq-sep"></div>
-
-                <div class="eq-title" style="color:#0f0;">3. Flux d'Énergie (Poynting)</div>
-                $$ \color{#0f0}{ \vec{S} = \frac{1}{\mu_0} \vec{E} \times \vec{B} } $$
             </div>
             
             <hr>
-
-            <label for="rSlider" style="color:#ffcc00;">Zoom / Rayon de l'anneau : <span id="rValue" class="val">150</span></label><br>
-            <input type="range" id="rSlider" min="5" max="200" step="5" value="150">
             
-            <label for="betaSlider" style="margin-top:5px; display:block;">Vitesse des charges (&beta;=v/c) : <span id="betaValue" class="val">0.30</span></label>
+            <div style="font-weight:bold; color:#ffaa00; margin-bottom:5px;">GÉOMÉTRIE DES CHARGES</div>
+            <div class="group-box" style="background:rgba(255, 170, 0, 0.1); border:1px solid #960;">
+                <div class="radio-group">
+                    <div><input type="radio" id="geoRing" name="geometry" value="ring" checked><label for="geoRing" style="font-weight:bold;">Anneau</label></div>
+                    <div><input type="radio" id="geoWire" name="geometry" value="wire"><label for="geoWire" style="font-weight:bold;">Fil Rectiligne</label></div>
+                </div>
+            </div>
+
+            <hr>
+            
+            <div class="group-box" style="border: 1px solid #aaa; background: rgba(0,0,0,0.5);">
+                <div class="row">
+                    <input type="checkbox" id="chkShowScope">
+                    <label for="chkShowScope" style="font-weight:bold; color: orange;">Afficher l'Oscilloscope (Souris)</label>
+                </div>
+            </div>
+
+            <hr>
+            
+            <label for="betaSlider" style="margin-top:5px; display:block;">Vitesse des charges (&beta;) : <span id="betaValue" class="val">0.30</span></label>
             <input type="range" id="betaSlider" min="0.1" max="0.95" step="0.01" value="0.30">
             
             <label for="nSlider" style="margin-top:2px; display:block;">Nombre de charges : <span id="nValue" class="val">150</span></label>
@@ -139,31 +179,19 @@
             <div style="font-weight:bold; color:#eee; margin-bottom:5px; text-align:center;">MODES DE VISUALISATION</div>
 
             <div class="group-box" id="boxPauseTrace" style="border: 1px solid #ffcc00; background:rgba(50,50,0,0.3);">
-                <div class="row">
-                    <input type="checkbox" id="chkPauseTrace">
-                    <label for="chkPauseTrace" style="color:#ffcc00; font-weight:bold;">Visualiser les lignes de champ (E)</label>
-                </div>
+                <div class="row"><input type="checkbox" id="chkPauseTrace"><label for="chkPauseTrace" style="color:#ffcc00; font-weight:bold;">Lignes de champ (E)</label></div>
             </div>
 
             <div class="group-box" id="boxMagneticMap" style="border: 1px solid #aaa; margin-top:5px; background:rgba(0,0,50,0.3);">
-                <div class="row">
-                    <input type="checkbox" id="chkMagneticMap">
-                    <label for="chkMagneticMap" style="color:#ccc; font-weight:bold;">Carte B ($\odot / \otimes$)</label>
-                </div>
+                <div class="row"><input type="checkbox" id="chkMagneticMap"><label for="chkMagneticMap" style="color:#ccc; font-weight:bold;">Carte B ($\odot / \otimes$)</label></div>
             </div>
 
             <div class="group-box" id="boxFieldMap" style="border: 1px solid #fff; margin-top:5px;">
-                <div class="row">
-                    <input type="checkbox" id="chkFieldMap">
-                    <label for="chkFieldMap" style="color:#fff; font-weight:bold;">Carte vectorielle E (Blanc)</label>
-                </div>
+                <div class="row"><input type="checkbox" id="chkFieldMap"><label for="chkFieldMap" style="color:#fff; font-weight:bold;">Carte vectorielle E (Blanc)</label></div>
             </div>
 
             <div class="group-box" id="boxPoynting" style="border: 1px solid #0f0; margin-top:5px; background:rgba(0,255,0,0.1);">
-                <div class="row">
-                    <input type="checkbox" id="chkPoynting">
-                    <label for="chkPoynting" style="color:#0f0; font-weight:bold;">Flux d'Énergie S (Vert)</label>
-                </div>
+                <div class="row"><input type="checkbox" id="chkPoynting"><label for="chkPoynting" style="color:#0f0; font-weight:bold;">Flux d'Énergie S (Vert)</label></div>
             </div>
 
             <hr>
@@ -174,8 +202,7 @@
                     <input type="checkbox" id="chkShowReal" checked><span class="dot" style="background:#888;"></span><label for="chkShowReal" class="info-label">Réelle (t)</label>
                     <div class="tooltip">
                         <strong>Charge Réelle (Présent)</strong>
-                        Position physique exacte de la particule à l'instant actuel $t$.<br>
-                        <em>Note : L'information que la particule est ici n'a pas encore eu le temps d'arriver à l'observateur.</em>
+                        Position physique exacte de la particule à l'instant actuel $t$.
                     </div>
                 </div>
                 <div class="row">
@@ -213,31 +240,45 @@
                     </div>
                 </div>
                 
-                <div id="trailBox" class="group-box">
-                     <div class="row"><span class="bar" style="background: #ffff00; height:4px;"></span><label style="color: #ffff00;">Champ Total E (Souris)</label></div>
-                    <div class="row" style="margin-top:5px; border-top:1px solid #555; padding-top:5px;">
-                        <input type="checkbox" id="chkShowTrail" checked>
-                        <label for="chkShowTrail" style="font-style:italic;">Afficher la trace (Hodographe)</label>
-                    </div>
+                 <div class="group-box" style="margin-top:10px; border:1px solid #ffff00;">
+                     <div class="row"><span class="bar" style="background: #ffff00; height:4px;"></span><label style="color: #ffff00; font-weight:bold;">Champ Total E (Résultant)</label></div>
                 </div>
             </div>
         </div>
     </div>
     
+    <div id="scope-container">
+        <div id="scope-header">
+            <span>Signal Normalisé (à la Souris)</span>
+            <div>
+                <span class="legend-item" style="color:#FFFF00;">E</span>
+                <span class="legend-item" style="color:#00CCFF;">B</span>
+                <span class="legend-item" style="color:#00FF00;">S</span>
+            </div>
+        </div>
+        <canvas id="scopeCanvas"></canvas>
+    </div>
+
     <canvas id="simCanvas"></canvas>
 
 <script>
     const canvas = document.getElementById('simCanvas');
     const ctx = canvas.getContext('2d');
     
-    // UI Elements
     const controls = document.getElementById('controls');
     const toggleBtn = document.getElementById('toggle-btn');
-    
     const nSlider = document.getElementById('nSlider'); const nValue = document.getElementById('nValue');
     const betaSlider = document.getElementById('betaSlider'); const betaValue = document.getElementById('betaValue');
-    const rSlider = document.getElementById('rSlider'); const rValue = document.getElementById('rValue');
     
+    const btnZoomIn = document.getElementById('btnZoomIn');
+    const btnZoomOut = document.getElementById('btnZoomOut');
+
+    const geoRingBtn = document.getElementById('geoRing'); const geoWireBtn = document.getElementById('geoWire');
+    let geometry = 'ring'; 
+
+    const chkShowScope = document.getElementById('chkShowScope'); 
+    const scopeContainer = document.getElementById('scope-container');
+
     const chkPauseTrace = document.getElementById('chkPauseTrace');
     const boxPauseTrace = document.getElementById('boxPauseTrace');
     const chkFieldMap = document.getElementById('chkFieldMap');
@@ -255,24 +296,33 @@
     const chkShowReal = document.getElementById('chkShowReal');
     const chkShowRetarded = document.getElementById('chkShowRetarded');
     const chkShowVirtual = document.getElementById('chkShowVirtual');
-    const chkShowTrail = document.getElementById('chkShowTrail');
-    const trailBox = document.getElementById('trailBox');
+
+    // SCOPE VARS
+    const scopeCanvas = document.getElementById('scopeCanvas');
+    const scopeCtx = scopeCanvas.getContext('2d');
+    let scopeData = { E: [], B: [], S: [] };
+    let scopeMax = { E: 0.0001, B: 0.0001, S: 0.0001 };
+    const SCOPE_LEN = 150;
 
     let width, height;
     const c = 6;            
-    let R_ring = 150; 
+    
+    // PHYSICS CONSTANTS
+    const R_PHY = 40; // PHYSICAL Radius (fixed physics)
     const K_BASE_REF = 4000;
     const amp = 0.25; 
     let freq = 0.03; 
     let targetBeta = 0.30; 
+    
+    // VISUAL CONSTANTS
+    let visualZoom = 3.5; // Controls the "Camera Zoom"
+
     let mouse = { x: 0, y: 0 };
     let N = 150; 
     let particles = [];
     let histories = []; 
     const MAX_HISTORY = 600; 
     let globalTime = 0;
-    let vectorTrail = []; 
-    const MAX_TRAIL_LENGTH = 150; 
     let lineSeeds = [];
 
     toggleBtn.addEventListener('click', () => {
@@ -280,28 +330,32 @@
         toggleBtn.textContent = controls.classList.contains('collapsed') ? '▶' : '◀';
     });
 
-    // --- CORRECTION URL ---
+    // ZOOM LOGIC (Visual Only)
+    function changeZoom(delta) {
+        visualZoom += delta;
+        // LIMITE ETENDUE : Permet de dézoomer beaucoup plus (jusqu'à 0.1)
+        if(visualZoom < 0.1) visualZoom = 0.1;
+        if(visualZoom > 10.0) visualZoom = 10.0;
+        initLineSeeds(); // Reset field lines on zoom
+        updateURL();
+    }
+    btnZoomIn.addEventListener('click', () => changeZoom(0.2));
+    btnZoomOut.addEventListener('click', () => changeZoom(-0.2));
+
+    chkShowScope.addEventListener('change', () => {
+        scopeContainer.style.display = chkShowScope.checked ? 'flex' : 'none';
+        updateURL();
+    });
+
     function updateURL() {
         const params = new URLSearchParams();
-        params.set('beta', betaSlider.value); params.set('n', nSlider.value); params.set('r', rSlider.value);
-        
-        // Visualisation Modes
+        params.set('beta', betaSlider.value); params.set('n', nSlider.value); params.set('z', visualZoom.toFixed(1));
+        params.set('geo', geometry);
+        params.set('scope', chkShowScope.checked ? '1' : '0');
         params.set('lines', chkPauseTrace.checked ? '1' : '0');
         params.set('emap', chkFieldMap.checked ? '1' : '0');
         params.set('bmap', chkMagneticMap.checked ? '1' : '0');
         params.set('smap', chkPoynting.checked ? '1' : '0');
-        
-        // Charges
-        params.set('real', chkShowReal.checked ? '1' : '0');
-        params.set('ret', chkShowRetarded.checked ? '1' : '0');
-        params.set('virt', chkShowVirtual.checked ? '1' : '0');
-        
-        // Components Filters
-        params.set('crad', chkCoulombRad.checked ? '1' : '0');
-        params.set('corth', chkCoulombOrtho.checked ? '1' : '0');
-        params.set('rrad', chkRadRad.checked ? '1' : '0');
-        params.set('rorth', chkRadOrtho.checked ? '1' : '0');
-        
         window.history.replaceState({}, '', `${location.pathname}?${params}`);
     }
 
@@ -310,29 +364,111 @@
         if(!params.has('beta')) return; 
         if(params.has('beta')) { let val = parseFloat(params.get('beta')); betaSlider.value = val; targetBeta = val; betaValue.textContent = val.toFixed(2); }
         if(params.has('n')) { let val = parseInt(params.get('n')); nSlider.value = val; N = val; nValue.textContent = val; }
-        if(params.has('r')) { let val = parseInt(params.get('r')); rSlider.value = val; R_ring = val; rValue.textContent = val; }
+        if(params.has('z')) { let val = parseFloat(params.get('z')); visualZoom = val; }
+        if(params.has('geo')) { let g = params.get('geo'); if(g === 'wire') { geoWireBtn.checked = true; geometry = 'wire'; } else { geoRingBtn.checked = true; geometry = 'ring'; } }
         
+        if(params.has('scope')) { 
+            chkShowScope.checked = (params.get('scope') === '1'); 
+            scopeContainer.style.display = chkShowScope.checked ? 'flex' : 'none';
+        }
+
         if(params.has('lines')) chkPauseTrace.checked = (params.get('lines') === '1');
         if(params.has('emap')) chkFieldMap.checked = (params.get('emap') === '1');
         if(params.has('bmap')) chkMagneticMap.checked = (params.get('bmap') === '1');
         if(params.has('smap')) chkPoynting.checked = (params.get('smap') === '1');
-        
-        if(params.has('real')) chkShowReal.checked = (params.get('real') === '1');
-        if(params.has('ret')) chkShowRetarded.checked = (params.get('ret') === '1');
-        if(params.has('virt')) chkShowVirtual.checked = (params.get('virt') === '1');
-        
-        if(params.has('crad')) chkCoulombRad.checked = (params.get('crad') === '1');
-        if(params.has('corth')) chkCoulombOrtho.checked = (params.get('corth') === '1');
-        if(params.has('rrad')) chkRadRad.checked = (params.get('rrad') === '1');
-        if(params.has('rorth')) chkRadOrtho.checked = (params.get('rorth') === '1');
     }
 
+    // FREQ depends on R_PHY (Constant) => Freq is Constant
+    function updateFreq() { freq = (targetBeta * c) / (R_PHY * amp); }
+
+    nSlider.addEventListener('input', function() { N = parseInt(this.value); nValue.textContent = N; initParticles(); updateURL(); });
+    betaSlider.addEventListener('input', function() { targetBeta = parseFloat(this.value); betaValue.textContent = targetBeta.toFixed(2); updateFreq(); updateURL(); });
+
+    geoRingBtn.addEventListener('change', () => { if(geoRingBtn.checked) { geometry = 'ring'; initParticles(); updateURL(); } });
+    geoWireBtn.addEventListener('change', () => { if(geoWireBtn.checked) { geometry = 'wire'; initParticles(); updateURL(); } });
+
+    [chkShowReal, chkShowRetarded, chkShowVirtual, chkCoulombRad, chkCoulombOrtho, chkRadRad, chkRadOrtho, chkPoynting, chkFieldMap, chkMagneticMap, chkPauseTrace].forEach(chk => {
+        if(chk) chk.addEventListener('change', () => { updateUIVisibility(chk); updateURL(); });
+    });
+
+    function updateUIVisibility(source) {
+        if (source === chkPauseTrace && chkPauseTrace.checked) {
+            chkFieldMap.checked = false; chkMagneticMap.checked = false; chkPoynting.checked = false;
+        } else if ((source === chkFieldMap || source === chkMagneticMap || source === chkPoynting) && (chkFieldMap.checked || chkMagneticMap.checked || chkPoynting.checked)) {
+            chkPauseTrace.checked = false;
+        }
+        let anyMap = chkFieldMap.checked || chkMagneticMap.checked || chkPoynting.checked;
+        boxPauseTrace.classList.toggle('disabled-section', !chkPauseTrace.checked && anyMap);
+        boxFieldMap.classList.toggle('disabled-section', chkPauseTrace.checked);
+        boxMagneticMap.classList.toggle('disabled-section', chkPauseTrace.checked);
+        boxPoynting.classList.toggle('disabled-section', chkPauseTrace.checked);
+    }
+    
+    function resize() {
+        width = window.innerWidth; height = window.innerHeight;
+        canvas.width = width; canvas.height = height;
+        scopeCanvas.width = 320; scopeCanvas.height = 155; 
+        initLineSeeds();
+    }
+    window.addEventListener('resize', resize); resize();
+
+    canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouse.x = e.clientX - rect.left - width / 2;
+        mouse.y = e.clientY - rect.top - height / 2;
+    });
+
+    loadFromURL(); updateFreq(); initParticles(); initLineSeeds(); updateUIVisibility();
+
     function initParticles() {
-        particles = []; histories = []; vectorTrail = [];
+        particles = []; histories = []; 
+        scopeData = { E:[], B:[], S:[] }; scopeMax = { E: 0.0001, B: 0.0001, S: 0.0001 };
+        
+        if (geometry === 'ring') {
+            for(let i=0; i<N; i++) {
+                let baseAngle = (Math.PI * 2 * i) / N;
+                particles.push({ mode: 'ring', baseAngle: baseAngle, phaseOffset: 0, x:0, y:0, vx:0, vy:0, ax:0, ay:0 });
+                histories.push([]); 
+            }
+        } else {
+            for(let i=0; i<N; i++) {
+                let t = (N > 1) ? i / (N - 1) : 0.5; 
+                let baseY = -R_PHY + t * (2 * R_PHY);
+                particles.push({ mode: 'wire', baseY: baseY, phaseOffset: 0, x:0, y:0, vx:0, vy:0, ax:0, ay:0 });
+                histories.push([]);
+            }
+        }
+    }
+
+    function updatePhysics() {
+        globalTime++;
+        if(particles.length !== N) { initParticles(); return; }
+
         for(let i=0; i<N; i++) {
-            let baseAngle = (Math.PI * 2 * i) / N;
-            particles.push({ baseAngle: baseAngle, phaseOffset: 0, x: 0, y: 0, vx: 0, vy: 0, ax: 0, ay: 0 });
-            histories.push([]); 
+            let p = particles[i];
+            if (p.mode === 'ring') {
+                let phase = globalTime * freq + p.phaseOffset;
+                let theta = p.baseAngle + amp * Math.sin(phase);
+                let thetaDot = amp * freq * Math.cos(phase);
+                let thetaDotDot = -amp * freq * freq * Math.sin(phase);
+                let cosT = Math.cos(theta); let sinT = Math.sin(theta);
+                p.x = R_PHY * cosT; p.y = R_PHY * sinT;
+                p.vx = -R_PHY * sinT * thetaDot; p.vy =  R_PHY * cosT * thetaDot;
+                p.ax = -R_PHY * (cosT * thetaDot * thetaDot + sinT * thetaDotDot);
+                p.ay =  R_PHY * (-sinT * thetaDot * thetaDot + cosT * thetaDotDot);
+            } else {
+                let phase = globalTime * freq + p.phaseOffset;
+                let spatialAmp = (c * targetBeta) / freq; 
+                if (spatialAmp > R_PHY * 0.8) spatialAmp = R_PHY * 0.8;
+                let osc = spatialAmp * Math.sin(phase);
+                let vel = spatialAmp * freq * Math.cos(phase);
+                let acc = -spatialAmp * freq * freq * Math.sin(phase);
+                p.x = 0; p.y = p.baseY + osc;
+                p.vx = 0; p.vy = vel;
+                p.ax = 0; p.ay = acc;
+            }
+            histories[i].unshift({ x: p.x, y: p.y, vx: p.vx, vy: p.vy, ax: p.ax, ay: p.ay, t: globalTime });
+            if (histories[i].length > MAX_HISTORY) histories[i].pop();
         }
     }
 
@@ -347,79 +483,23 @@
         }
     }
 
-    function updateFreq() { freq = (targetBeta * c) / (R_ring * amp); }
-
-    nSlider.addEventListener('input', function() { N = parseInt(this.value); nValue.textContent = N; initParticles(); updateURL(); });
-    betaSlider.addEventListener('input', function() { targetBeta = parseFloat(this.value); betaValue.textContent = targetBeta.toFixed(2); updateFreq(); updateURL(); });
-    rSlider.addEventListener('input', function() { R_ring = parseInt(this.value); rValue.textContent = R_ring; updateFreq(); updateURL(); });
-
-    [chkShowReal, chkShowRetarded, chkShowVirtual, chkCoulombRad, chkCoulombOrtho, chkRadRad, chkRadOrtho, chkPoynting, chkFieldMap, chkMagneticMap, chkPauseTrace].forEach(chk => {
-        if(chk) chk.addEventListener('change', () => { updateUIVisibility(chk); updateURL(); });
-    });
-
-    function updateUIVisibility(source) {
-        if (source === chkPauseTrace && chkPauseTrace.checked) {
-            chkFieldMap.checked = false; chkMagneticMap.checked = false; chkPoynting.checked = false;
-        } else if ((source === chkFieldMap || source === chkMagneticMap || source === chkPoynting) && (chkFieldMap.checked || chkMagneticMap.checked || chkPoynting.checked)) {
-            chkPauseTrace.checked = false;
-        }
-        
-        let anyMap = chkFieldMap.checked || chkMagneticMap.checked || chkPoynting.checked;
-        boxPauseTrace.classList.toggle('disabled-section', !chkPauseTrace.checked && anyMap);
-        boxFieldMap.classList.toggle('disabled-section', chkPauseTrace.checked);
-        boxMagneticMap.classList.toggle('disabled-section', chkPauseTrace.checked);
-        boxPoynting.classList.toggle('disabled-section', chkPauseTrace.checked);
-        
-        if(!chkPauseTrace.checked && !anyMap) { trailBox.style.display = 'block'; } else { trailBox.style.display = 'none'; }
-    }
-    
-    function resize() {
-        width = window.innerWidth; height = window.innerHeight;
-        canvas.width = width; canvas.height = height;
-        initLineSeeds();
-    }
-    window.addEventListener('resize', resize); resize();
-
-    canvas.addEventListener('mousemove', e => {
-        const rect = canvas.getBoundingClientRect();
-        mouse.x = e.clientX - rect.left - width / 2;
-        mouse.y = e.clientY - rect.top - height / 2;
-        vectorTrail = []; 
-    });
-
-    loadFromURL(); 
-    updateFreq(); initParticles(); initLineSeeds(); updateUIVisibility();
-
-    function updatePhysics() {
-        globalTime++;
-        for(let i=0; i<N; i++) {
-            let p = particles[i];
-            let phase = globalTime * freq + p.phaseOffset;
-            let theta = p.baseAngle + amp * Math.sin(phase);
-            let thetaDot = amp * freq * Math.cos(phase);
-            let thetaDotDot = -amp * freq * freq * Math.sin(phase);
-            let cosT = Math.cos(theta); let sinT = Math.sin(theta);
-            p.x = R_ring * cosT; p.y = R_ring * sinT;
-            p.vx = -R_ring * sinT * thetaDot; p.vy =  R_ring * cosT * thetaDot;
-            p.ax = -R_ring * (cosT * thetaDot * thetaDot + sinT * thetaDotDot);
-            p.ay =  R_ring * (-sinT * thetaDot * thetaDot + cosT * thetaDotDot);
-            histories[i].unshift({ x: p.x, y: p.y, vx: p.vx, vy: p.vy, ax: p.ax, ay: p.ay, t: globalTime });
-            if (histories[i].length > MAX_HISTORY) histories[i].pop();
-        }
-    }
-
     function sub(v1, v2) { return { x: v1.x - v2.x, y: v1.y - v2.y }; }
     function mag(v) { return Math.sqrt(v.x * v.x + v.y * v.y); }
     function normalize(v) { let m = mag(v); return m === 0 ? {x:0, y:0} : { x: v.x/m, y: v.y/m }; }
     function dot(v1, v2) { return v1.x * v2.x + v1.y * v2.y; }
 
     function getRetardedState(particleIndex, obsX, obsY) {
+        if (!histories[particleIndex]) return null;
         let hist = histories[particleIndex];
-        if (!hist || hist.length === 0) return null;
+        if (hist.length === 0) return null;
         let searchLimit = Math.min(hist.length, 600);
+        
+        let physX = obsX / visualZoom;
+        let physY = obsY / visualZoom;
+
         for (let k = 0; k < searchLimit; k++) {
             let s = hist[k];
-            let dx = obsX - s.x; let dy = obsY - s.y;
+            let dx = physX - s.x; let dy = physY - s.y;
             let dist = Math.sqrt(dx*dx + dy*dy);
             if (Math.abs(dist - k * c) < c) return { state: s, R: dist, vectorR: {x: dx, y: dy} };
         }
@@ -429,11 +509,12 @@
     function computeFieldAt(x, y) {
         let res = { total: {x:0, y:0}, coulomb: {x:0, y:0}, rad: {x:0, y:0}, Bz: 0, count: 0 };
         let gammaApprox = 1 / Math.sqrt(1 - targetBeta*targetBeta);
-        let zoomFactor = 150 / R_ring; 
-        let visualK = K_BASE_REF * zoomFactor * 1.5 / (gammaApprox * 0.5 + 0.5); 
+        
+        // VisualK fixed for R_PHY = 40
+        let visualK = K_BASE_REF * (150/40) * 1.5 / (gammaApprox * 0.5 + 0.5); 
 
         for(let i=0; i<N; i++) {
-            let ret = getRetardedState(i, x, y);
+            let ret = getRetardedState(i, x, y); 
             if (ret) {
                 res.count++;
                 let s = ret.state; let R = ret.R;
@@ -466,6 +547,9 @@
         let u_r = {x:0, y:0}, u_theta = {x:0, y:0};
         let dist = Math.sqrt(x*x + y*y);
         if(dist > 0.001) { u_r.x = x / dist; u_r.y = y / dist; u_theta.x = -u_r.y; u_theta.y = u_r.x; }
+        
+        window.u_r = u_r; window.u_theta = u_theta; 
+
         let finalVec = {x:0, y:0};
         if(chkCoulombRad.checked) { let val = dot(field.coulomb, u_r); finalVec.x += val * u_r.x; finalVec.y += val * u_r.y; }
         if(chkCoulombOrtho.checked) { let val = dot(field.coulomb, u_theta); finalVec.x += val * u_theta.x; finalVec.y += val * u_theta.y; }
@@ -497,6 +581,33 @@
             ctx.closePath(); ctx.fill();
         }
         ctx.restore();
+    }
+
+    function drawScope(eVal, bVal, sVal) {
+        scopeData.E.push(eVal); if(scopeData.E.length > SCOPE_LEN) scopeData.E.shift();
+        scopeData.B.push(bVal); if(scopeData.B.length > SCOPE_LEN) scopeData.B.shift();
+        scopeData.S.push(sVal); if(scopeData.S.length > SCOPE_LEN) scopeData.S.shift();
+
+        scopeMax.E = Math.max(scopeMax.E, eVal);
+        scopeMax.B = Math.max(scopeMax.B, bVal);
+        scopeMax.S = Math.max(scopeMax.S, sVal);
+
+        scopeCtx.fillStyle = '#000'; scopeCtx.fillRect(0, 0, scopeCanvas.width, scopeCanvas.height);
+        
+        function drawLine(arr, color, maxVal) {
+            scopeCtx.beginPath(); scopeCtx.strokeStyle = color; scopeCtx.lineWidth = 2;
+            let step = scopeCanvas.width / SCOPE_LEN;
+            for(let i=0; i<arr.length; i++) {
+                let x = i * step;
+                let y = scopeCanvas.height - (arr[i] / maxVal) * (scopeCanvas.height * 0.9) - 5;
+                if(i===0) scopeCtx.moveTo(x, y); else scopeCtx.lineTo(x, y);
+            }
+            scopeCtx.stroke();
+        }
+
+        drawLine(scopeData.E, '#FFFF00', scopeMax.E);
+        drawLine(scopeData.B, '#00CCFF', scopeMax.B);
+        drawLine(scopeData.S, '#00FF00', scopeMax.S);
     }
 
     function drawContinuousStreamlines() {
@@ -537,16 +648,23 @@
             if (!chkPauseTrace.checked) updatePhysics();
             
             ctx.globalAlpha = 1.0; ctx.setLineDash([]);
-            let oscAngle = amp * Math.sin(globalTime * freq);
-            ctx.beginPath();
-            let bx = R_ring * Math.cos(oscAngle); let by = R_ring * Math.sin(oscAngle);
-            ctx.moveTo(-bx, -by); ctx.lineTo(bx, by);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 4; ctx.stroke();
-            ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
+            
+            if (geometry === 'ring') {
+                let oscAngle = amp * Math.sin(globalTime * freq);
+                ctx.beginPath();
+                let bx = (R_PHY * visualZoom) * Math.cos(oscAngle); 
+                let by = (R_PHY * visualZoom) * Math.sin(oscAngle);
+                ctx.moveTo(-bx, -by); ctx.lineTo(bx, by);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 4; ctx.stroke();
+                ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
+            } else {
+                let spatialAmp = (c * targetBeta) / freq; if(spatialAmp > R_PHY*0.8) spatialAmp = R_PHY*0.8;
+                let oscY = (spatialAmp * visualZoom) * Math.sin(globalTime * freq);
+                ctx.beginPath(); ctx.arc(0, oscY, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
+            }
 
             let safeN = Math.max(N, 1); 
 
-            // 1. CARTE B
             if (chkMagneticMap.checked) {
                 const step = 40; 
                 const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
@@ -567,7 +685,6 @@
                 }
             }
 
-            // 2. CARTE E (Blanc, Log Scale)
             if (chkFieldMap.checked) {
                 const step = 40; 
                 const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
@@ -578,16 +695,12 @@
                     for (let y = startY; y <= endY; y += step) {
                         let rawField = computeFieldAt(x, y); let v = getFilteredVector(rawField, x, y);
                         let mag = Math.sqrt(v.x*v.x + v.y*v.y);
-                        
                         if (mag > 0.00005) {
                             let magPerCharge = mag / safeN;
                             let intensity = Math.log(1 + magPerCharge * 500); 
-                            let ratio = intensity / 4.0; 
-                            if(ratio > 1) ratio = 1;
-                            
+                            let ratio = intensity / 4.0; if(ratio > 1) ratio = 1;
                             let len = ratio * MAX_ARROW_LEN;
                             let width = 1 + 2 * (len / MAX_ARROW_LEN); 
-
                             if(len > 3) {
                                 let dx = (v.x/mag) * len; let dy = (v.y/mag) * len;
                                 if (chkMagneticMap.checked || chkPoynting.checked) drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#FFFFFF', width, 0.8, true);
@@ -598,31 +711,24 @@
                 }
             }
 
-            // 3. CARTE S (Vert Fin, Log(Sqrt) Scale)
             if (chkPoynting.checked) {
                 const step = 40; 
                 const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
                 const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
                 const MAX_S_LEN = step * 0.9;
-                
                 for (let x = startX; x <= endX; x += step) {
                     for (let y = startY; y <= endY; y += step) {
                         let field = computeFieldAt(x, y); 
                         let Sx = field.total.y * field.Bz;
                         let Sy = -field.total.x * field.Bz;
                         let Smag = Math.sqrt(Sx*Sx + Sy*Sy);
-
                         if (Smag > 0.000001) {
                             let SmagRoot = Math.sqrt(Smag);
                             let normalizedS = SmagRoot / safeN; 
-                            
                             let intensity = Math.log(1 + normalizedS * 500); 
-                            let ratio = intensity / 4.0;
-                            if(ratio > 1) ratio = 1;
-                            
+                            let ratio = intensity / 4.0; if(ratio > 1) ratio = 1;
                             let len = ratio * MAX_S_LEN;
                             let width = 0.5 + 1.0 * (len / MAX_S_LEN);
-
                             if (len > 3) {
                                 let dx = (Sx/Smag) * len; let dy = (Sy/Smag) * len;
                                 if (chkMagneticMap.checked || chkFieldMap.checked) drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#00FF00', width, 0.9, true);
@@ -636,23 +742,48 @@
             if (chkPauseTrace.checked) drawContinuousStreamlines();
 
             if ((chkShowReal.checked || chkShowRetarded.checked || chkShowVirtual.checked)) {
-                for(let i=0; i<N; i++) {
-                    let p = particles[i];
-                    if(chkShowReal.checked) { ctx.fillStyle = '#666'; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); }
-                    if(!chkPauseTrace.checked) {
-                        if(chkShowRetarded.checked || chkShowVirtual.checked) {
-                            let ret = getRetardedState(i, mouse.x, mouse.y);
-                            if(ret) {
-                                if(chkShowRetarded.checked) { ctx.fillStyle = 'cyan'; ctx.beginPath(); ctx.arc(ret.state.x, ret.state.y, 2, 0, Math.PI*2); ctx.fill(); }
-                                if(chkShowVirtual.checked) { let dt = ret.R / c; ctx.fillStyle = 'magenta'; ctx.beginPath(); ctx.arc(ret.state.x + ret.state.vx * dt, ret.state.y + ret.state.vy * dt, 1.5, 0, Math.PI*2); ctx.fill(); }
+                if(particles.length === N) {
+                    for(let i=0; i<N; i++) {
+                        let p = particles[i];
+                        if(chkShowReal.checked) { 
+                            ctx.fillStyle = '#666'; ctx.beginPath(); 
+                            ctx.arc(p.x * visualZoom, p.y * visualZoom, 3, 0, Math.PI*2); ctx.fill(); 
+                        }
+                        if(!chkPauseTrace.checked) {
+                            if(chkShowRetarded.checked || chkShowVirtual.checked) {
+                                let ret = getRetardedState(i, mouse.x, mouse.y);
+                                if(ret) {
+                                    if(chkShowRetarded.checked) { 
+                                        ctx.fillStyle = 'cyan'; ctx.beginPath(); 
+                                        ctx.arc(ret.state.x * visualZoom, ret.state.y * visualZoom, 2, 0, Math.PI*2); ctx.fill(); 
+                                    }
+                                    if(chkShowVirtual.checked) { 
+                                        let dt = ret.R / c; 
+                                        let virtX = ret.state.x + ret.state.vx * dt;
+                                        let virtY = ret.state.y + ret.state.vy * dt;
+                                        ctx.fillStyle = 'magenta'; ctx.beginPath(); 
+                                        ctx.arc(virtX * visualZoom, virtY * visualZoom, 1.5, 0, Math.PI*2); ctx.fill(); 
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
             
+            if (chkShowScope.checked && isFinite(mouse.x) && isFinite(mouse.y)) {
+                let field = computeFieldAt(mouse.x, mouse.y); 
+                try {
+                    let eMag = Math.sqrt(field.total.x**2 + field.total.y**2);
+                    let bMag = Math.abs(field.Bz);
+                    let sMag = eMag * bMag;
+                    drawScope(eMag, bMag, sMag); 
+                } catch(err) {}
+            }
+
             if (isFinite(mouse.x) && isFinite(mouse.y)) {
-                let field = computeFieldAt(mouse.x, mouse.y); let v_filtered = getFilteredVector(field, mouse.x, mouse.y); 
+                let field = computeFieldAt(mouse.x, mouse.y);
+                let v_filtered = getFilteredVector(field, mouse.x, mouse.y); 
                 if (field.count > 0) {
                     let mouseDist = Math.sqrt(mouse.x*mouse.x + mouse.y*mouse.y);
                     let u_r = { x: 0, y: 0 }; let u_theta = { x: 0, y: 0 };
@@ -672,15 +803,7 @@
                     let v_sum = { x: v_filtered.x * displayScale, y: v_filtered.y * displayScale };
                     let vSumLen = Math.sqrt(v_sum.x**2 + v_sum.y**2);
                     if (vSumLen > 0.001) {
-                        if (chkShowTrail.checked) {
-                            vectorTrail.push({x: mouse.x + v_sum.x, y: mouse.y + v_sum.y});
-                            if (vectorTrail.length > MAX_TRAIL_LENGTH) vectorTrail.shift();
-                            ctx.beginPath();
-                            for(let k=0; k<vectorTrail.length - 1; k++) { ctx.moveTo(vectorTrail[k].x, vectorTrail[k].y); ctx.lineTo(vectorTrail[k+1].x, vectorTrail[k+1].y); }
-                            ctx.strokeStyle = 'rgba(255, 255, 0, 0.3)'; ctx.lineWidth = 1; ctx.stroke();
-                        }
-                        if (vSumLen > 15) { drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_sum.x, mouse.y + v_sum.y, '#ffff00', 2, 1.0); }
-                        else { let dirX = v_sum.x / vSumLen; let dirY = v_sum.y / vSumLen; ctx.save(); ctx.beginPath(); ctx.setLineDash([5, 5]); ctx.moveTo(mouse.x, mouse.y); ctx.lineTo(mouse.x + dirX * 60, mouse.y + dirY * 60); ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore(); }
+                        drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_sum.x, mouse.y + v_sum.y, '#FFFF00', 2.5, 1.0);
                     }
                 }
             }
@@ -692,6 +815,23 @@
         }
         requestAnimationFrame(draw);
     }
+    
+    function getFilteredVector(field, x, y) {
+        if(field.count === 0) return {x:0, y:0};
+        let u_r = {x:0, y:0}, u_theta = {x:0, y:0};
+        let dist = Math.sqrt(x*x + y*y);
+        if(dist > 0.001) { u_r.x = x / dist; u_r.y = y / dist; u_theta.x = -u_r.y; u_theta.y = u_r.x; }
+        
+        window.u_r = u_r; window.u_theta = u_theta; 
+
+        let finalVec = {x:0, y:0};
+        if(chkCoulombRad.checked) { let val = dot(field.coulomb, u_r); finalVec.x += val * u_r.x; finalVec.y += val * u_r.y; }
+        if(chkCoulombOrtho.checked) { let val = dot(field.coulomb, u_theta); finalVec.x += val * u_theta.x; finalVec.y += val * u_theta.y; }
+        if(chkRadRad.checked) { let val = dot(field.rad, u_r); finalVec.x += val * u_r.x; finalVec.y += val * u_r.y; }
+        if(chkRadOrtho.checked) { let val = dot(field.rad, u_theta); finalVec.x += val * u_theta.x; finalVec.y += val * u_theta.y; }
+        return finalVec;
+    }
+
     draw();
 </script>
 </body>
