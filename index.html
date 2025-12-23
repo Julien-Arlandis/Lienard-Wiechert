@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Heaviside-Feynman v7.3 : Densité Réduite & Trou Corrigé</title>
+    <title>Heaviside-Feynman v7.6 : Liberté Totale</title>
     
     <script>
     window.MathJax = {
@@ -143,7 +143,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v7.3</div>
+            <div class="version-tag">v7.6</div>
 
             <h3>Visualisation Relativiste</h3>
             
@@ -167,7 +167,7 @@
 
             <hr>
             
-            <div id="autoControls">
+            <div id="geoSection">
                 <div style="font-weight:bold; color:#ffaa00; margin-bottom:5px;">GÉOMÉTRIE DES CHARGES</div>
                 <div class="group-box" style="background:rgba(255, 170, 0, 0.1); border:1px solid #960;">
                     <div class="radio-group">
@@ -312,6 +312,7 @@
     const nSlider = document.getElementById('nSlider'); const nValue = document.getElementById('nValue');
     const betaSlider = document.getElementById('betaSlider'); const betaValue = document.getElementById('betaValue');
     const autoControls = document.getElementById('autoControls');
+    const geoSection = document.getElementById('geoSection'); 
     
     const btnZoomIn = document.getElementById('btnZoomIn');
     const btnZoomOut = document.getElementById('btnZoomOut');
@@ -391,16 +392,31 @@
         updateURL();
     });
 
+    // AUTO ENABLE LOGIC
+    function checkAutoLines() {
+        if (!isManualMode) {
+            // If N > 20, we pause by default if lines are on
+            // If N <= 20, we allow live play
+        }
+    }
+
     function updateMode() {
         isManualMode = modeManualBtn.checked;
         if(isManualMode) {
-            autoControls.classList.add('disabled-section');
+            // HIDE GEO
+            geoSection.style.display = 'none';
             manualHint.style.display = 'block';
             N = 1; 
             probe.x = 60; probe.y = 0; 
             scopeTitle.textContent = "Signal à l'Observateur (Centre)";
+            
+            // AUTO ENABLE LINES FOR MANUAL
+            chkPauseTrace.checked = true;
+            // DO NOT DISABLE MAPS! allow mixing.
+            
         } else {
-            autoControls.classList.remove('disabled-section');
+            // SHOW GEO
+            geoSection.style.display = 'block';
             manualHint.style.display = 'none';
             N = parseInt(nSlider.value);
             scopeTitle.textContent = "Signal à la Souris";
@@ -413,28 +429,25 @@
 
     function updateFreq() { freq = (targetBeta * c) / (R_PHY * amp); }
 
-    nSlider.addEventListener('input', function() { if(!isManualMode) { N = parseInt(this.value); nValue.textContent = N; initParticles(); updateURL(); } });
+    nSlider.addEventListener('input', function() { 
+        if(!isManualMode) { 
+            N = parseInt(this.value); 
+            nValue.textContent = N; 
+            initParticles(); 
+            updateURL(); 
+        } 
+    });
     betaSlider.addEventListener('input', function() { targetBeta = parseFloat(this.value); betaValue.textContent = targetBeta.toFixed(2); updateFreq(); updateURL(); });
 
     geoRingBtn.addEventListener('change', () => { if(geoRingBtn.checked) { geometry = 'ring'; initParticles(); updateURL(); } });
     geoWireBtn.addEventListener('change', () => { if(geoWireBtn.checked) { geometry = 'wire'; initParticles(); updateURL(); } });
 
     [chkShowReal, chkShowRetarded, chkShowVirtual, chkCoulombRad, chkCoulombOrtho, chkRadRad, chkRadOrtho, chkPoynting, chkFieldMap, chkMagneticMap, chkPauseTrace].forEach(chk => {
-        if(chk) chk.addEventListener('change', () => { updateUIVisibility(chk); updateURL(); });
+        if(chk) chk.addEventListener('change', () => { updateURL(); });
     });
 
-    function updateUIVisibility(source) {
-        if (source === chkPauseTrace && chkPauseTrace.checked) {
-            chkFieldMap.checked = false; chkMagneticMap.checked = false; chkPoynting.checked = false;
-        } else if ((source === chkFieldMap || source === chkMagneticMap || source === chkPoynting) && (chkFieldMap.checked || chkMagneticMap.checked || chkPoynting.checked)) {
-            chkPauseTrace.checked = false;
-        }
-        let anyMap = chkFieldMap.checked || chkMagneticMap.checked || chkPoynting.checked;
-        boxPauseTrace.classList.toggle('disabled-section', !chkPauseTrace.checked && anyMap);
-        boxFieldMap.classList.toggle('disabled-section', chkPauseTrace.checked);
-        boxMagneticMap.classList.toggle('disabled-section', chkPauseTrace.checked);
-        boxPoynting.classList.toggle('disabled-section', chkPauseTrace.checked);
-    }
+    // REMOVED THE AGGRESSIVE UI VISIBILITY LOGIC
+    // We let the user check whatever they want.
     
     function resize() {
         width = window.innerWidth; height = window.innerHeight;
@@ -509,7 +522,7 @@
         if(params.has('rorth')) chkRadOrtho.checked = (params.get('rorth') === '1');
     }
 
-    updateFreq(); loadFromURL(); initParticles(); initLineSeeds(); updateUIVisibility();
+    updateFreq(); loadFromURL(); initParticles(); initLineSeeds(); // UpdateUI not needed anymore
 
     function initParticles() {
         particles = []; histories = []; 
@@ -563,7 +576,6 @@
             p.x = nextX; p.y = nextY;
             histories[0].unshift({ x: p.x, y: p.y, vx: p.vx, vy: p.vy, ax: p.ax, ay: p.ay, t: globalTime });
             if (histories[0].length > MAX_HISTORY) histories[0].pop();
-            // IMPORTANT: Allow continuous draw even when paused check is true
             return;
         }
 
@@ -595,14 +607,13 @@
         }
     }
 
-    // REDUCED DENSITY HERE
     function initLineSeeds() {
         lineSeeds = [];
-        const cols = 18; const rows = 14; // Reduced from 25x20 to 18x14
+        const cols = 12; const rows = 9; 
         for(let i=0; i<cols; i++) {
             for(let j=0; j<rows; j++) {
-                let jx = (Math.random()-0.5) * 40; let jy = (Math.random()-0.5) * 40;
-                lineSeeds.push({ x: (i/cols - 0.5) * width * 1.4 + jx, y: (j/rows - 0.5) * height * 1.4 + jy });
+                let jx = (Math.random()-0.5) * 60; let jy = (Math.random()-0.5) * 60;
+                lineSeeds.push({ x: (i/cols - 0.5) * width * 1.5 + jx, y: (j/rows - 0.5) * height * 1.5 + jy });
             }
         }
     }
@@ -637,7 +648,7 @@
             if (ret) {
                 res.count++;
                 let s = ret.state; let R = ret.R;
-                if(R < 2) R = 2; // CLAMP FOR SINGULARITY
+                if(R < 2) R = 2; 
                 let n = normalize(ret.vectorR);
                 let beta = { x: s.vx / c, y: s.vy / c }; let betaDot = { x: s.ax / c, y: s.ay / c }; 
                 let kappa = 1 - dot(n, beta); if(kappa < 0.01) kappa = 0.01;
@@ -730,7 +741,6 @@
                 let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
                 if(mag < 0.00001) break; 
                 cx += (v.x / mag) * STEP_SIZE; cy += (v.y / mag) * STEP_SIZE;
-                // FIX: Reduced stop radius from 20 to 2 to fill the center hole
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 2) break; 
                 pointsForward.push({x: cx, y: cy});
             }
@@ -741,7 +751,6 @@
                 let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
                 if(mag < 0.00001) break;
                 cx -= (v.x / mag) * STEP_SIZE; cy -= (v.y / mag) * STEP_SIZE;
-                // FIX: Reduced stop radius from 20 to 2 to fill the center hole
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 2) break;
                 pointsBackward.push({x: cx, y: cy});
             }
@@ -760,9 +769,15 @@
             ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.fillRect(0, 0, width, height);
             ctx.save(); ctx.translate(width / 2, height / 2);
             
-            // KEY LOGIC: If Manual, always update physics to follow mouse.
-            // If Auto, update only if not paused.
-            if (isManualMode || !chkPauseTrace.checked) {
+            // KEY LOGIC: 
+            // 1. Manual Mode: Always live.
+            // 2. Auto Mode: Live if streamlines unchecked OR if N is small (< 20)
+            let shouldUpdate = false;
+            if (isManualMode) shouldUpdate = true;
+            else if (!chkPauseTrace.checked) shouldUpdate = true;
+            else if (N < 20) shouldUpdate = true; // NEW THRESHOLD FOR LIVE TRACE
+            
+            if (shouldUpdate) {
                 updatePhysics();
             }
             
@@ -794,21 +809,16 @@
             const MAX_ARROW_LEN = step * 0.95;
             const MAX_S_LEN = step * 0.9;
 
-            // UNIFIED GRID LOOP (Centered Offset)
-            // Offset ensures we never hit (0,0) exactly
-            // Increase loop range by +2 to cover full screen
             const nX = Math.ceil(width / 2 / step) + 2;
             const nY = Math.ceil(height / 2 / step) + 2;
 
             for (let i = -nX; i <= nX; i++) {
                 for (let j = -nY; j <= nY; j++) {
-                    // CENTERED OFFSET: (i + 0.5) * step
                     let x = (i + 0.5) * step;
                     let y = (j + 0.5) * step;
                     
                     let field = computeFieldAt(x, y); 
                     
-                    // 1. MAGNETIC
                     if (chkMagneticMap.checked) {
                         let Bz = field.Bz;
                         let intensity = Math.tanh(Bz * B_SCALE_FACTOR / 60); let absI = Math.abs(intensity);
@@ -819,7 +829,6 @@
                         }
                     }
 
-                    // 2. ELECTRIC
                     if (chkFieldMap.checked) {
                         let v = getFilteredVector(field, x, y);
                         let mag = Math.sqrt(v.x*v.x + v.y*v.y);
@@ -837,7 +846,6 @@
                         }
                     }
 
-                    // 3. POYNTING
                     if (chkPoynting.checked) {
                         let Sx = field.total.y * field.Bz;
                         let Sy = -field.total.x * field.Bz;
@@ -922,15 +930,11 @@
                         let v_R_rad = { x: dot(field.rad, u_r) * u_r.x * displayScale, y: dot(field.rad, u_r) * u_r.y * displayScale };
                         let v_R_orth = { x: dot(field.rad, u_theta) * u_theta.x * displayScale, y: dot(field.rad, u_theta) * u_theta.y * displayScale };
                         
-                        // Only draw components if NOT manual mode
-                        if (!isManualMode) {
-                            if (chkCoulombRad.checked) drawArrow(ctx, obsX, obsY, obsX + v_C_rad.x, obsY + v_C_rad.y, '#00ff00', 1.5, 0.9);
-                            if (chkCoulombOrtho.checked) drawArrow(ctx, obsX, obsY, obsX + v_C_orth.x, obsY + v_C_orth.y, '#66ff66', 1.5, 0.9);
-                            if (chkRadRad.checked) drawArrow(ctx, obsX, obsY, obsX + v_R_rad.x, obsY + v_R_rad.y, '#ff3333', 1.5, 0.9);
-                            if (chkRadOrtho.checked) drawArrow(ctx, obsX, obsY, obsX + v_R_orth.x, obsY + v_R_orth.y, '#ff8888', 1.5, 0.9);
-                        }
+                        if (chkCoulombRad.checked) drawArrow(ctx, obsX, obsY, obsX + v_C_rad.x, obsY + v_C_rad.y, '#00ff00', 1.5, 0.9);
+                        if (chkCoulombOrtho.checked) drawArrow(ctx, obsX, obsY, obsX + v_C_orth.x, obsY + v_C_orth.y, '#66ff66', 1.5, 0.9);
+                        if (chkRadRad.checked) drawArrow(ctx, obsX, obsY, obsX + v_R_rad.x, obsY + v_R_rad.y, '#ff3333', 1.5, 0.9);
+                        if (chkRadOrtho.checked) drawArrow(ctx, obsX, obsY, obsX + v_R_orth.x, obsY + v_R_orth.y, '#ff8888', 1.5, 0.9);
 
-                        // TOTAL VECTOR
                         let v_sum = { x: v_filtered.x * displayScale, y: v_filtered.y * displayScale };
                         let vSumLen = Math.sqrt(v_sum.x**2 + v_sum.y**2);
                         if (vSumLen > 0.001) {
