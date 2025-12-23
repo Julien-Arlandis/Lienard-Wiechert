@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Heaviside-Feynman v7.2 : Temps Réel Interactif</title>
+    <title>Heaviside-Feynman v7.3 : Densité Réduite & Trou Corrigé</title>
     
     <script>
     window.MathJax = {
@@ -143,7 +143,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v7.2</div>
+            <div class="version-tag">v7.3</div>
 
             <h3>Visualisation Relativiste</h3>
             
@@ -595,9 +595,10 @@
         }
     }
 
+    // REDUCED DENSITY HERE
     function initLineSeeds() {
         lineSeeds = [];
-        const cols = 25; const rows = 20;
+        const cols = 18; const rows = 14; // Reduced from 25x20 to 18x14
         for(let i=0; i<cols; i++) {
             for(let j=0; j<rows; j++) {
                 let jx = (Math.random()-0.5) * 40; let jy = (Math.random()-0.5) * 40;
@@ -724,18 +725,24 @@
         for (let seed of lineSeeds) {
             let pointsForward = []; let cx = seed.x, cy = seed.y; pointsForward.push({x: cx, y: cy});
             for(let k=0; k<MAX_STEPS; k++) {
-                let rawField = computeFieldAt(cx, cy); let v = getFilteredVector(rawField, cx, cy);
-                let mag = Math.sqrt(v.x*v.x + v.y*v.y); if(mag < 0.00001) break; 
+                let rawField = computeFieldAt(cx, cy); 
+                let v = getFilteredVector(rawField, cx, cy);
+                let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
+                if(mag < 0.00001) break; 
                 cx += (v.x / mag) * STEP_SIZE; cy += (v.y / mag) * STEP_SIZE;
-                if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break; 
+                // FIX: Reduced stop radius from 20 to 2 to fill the center hole
+                if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 2) break; 
                 pointsForward.push({x: cx, y: cy});
             }
             let pointsBackward = []; cx = seed.x; cy = seed.y;
             for(let k=0; k<MAX_STEPS; k++) {
-                let rawField = computeFieldAt(cx, cy); let v = getFilteredVector(rawField, cx, cy);
-                let mag = Math.sqrt(v.x*v.x + v.y*v.y); if(mag < 0.00001) break;
+                let rawField = computeFieldAt(cx, cy); 
+                let v = getFilteredVector(rawField, cx, cy);
+                let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
+                if(mag < 0.00001) break;
                 cx -= (v.x / mag) * STEP_SIZE; cy -= (v.y / mag) * STEP_SIZE;
-                if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break;
+                // FIX: Reduced stop radius from 20 to 2 to fill the center hole
+                if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 2) break;
                 pointsBackward.push({x: cx, y: cy});
             }
             if(pointsBackward.length > 0) {
