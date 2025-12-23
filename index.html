@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Heaviside-Feynman v4.8</title>
+    <title>Heaviside-Feynman v5.1</title>
     
     <script>
     window.MathJax = {
@@ -114,7 +114,8 @@
         .val { color: #fff; font-weight: bold; }
         mjx-container { font-size: 85% !important; color: #eee !important; overflow-x: hidden; margin: 2px 0 !important; }
 
-        .info-label { border-bottom: 1px dotted #888; cursor: help; }
+        .info-label { cursor: help; }
+        
         .tooltip {
             visibility: hidden; width: 260px; background-color: #111; color: #eee; text-align: left; 
             border-radius: 6px; padding: 12px; position: absolute; z-index: 100; top: 100%; left: 10px; 
@@ -123,8 +124,9 @@
             font-size: 11px; line-height: 1.5; pointer-events: none;
         }
         .row:hover .tooltip { visibility: visible; opacity: 1; }
-        .tooltip strong { color: #00aaff; display: block; margin-bottom: 5px; font-size: 12px; border-bottom: 1px solid #333; padding-bottom: 3px; }
+        .tooltip strong { color: #00aaff; display: block; margin-bottom: 5px; font-size: 12px; padding-bottom: 0px; }
         .tooltip em { color: #aaa; display: block; margin-top: 5px; font-style: italic; }
+        
         .disabled-section { opacity: 0.3; pointer-events: none; transition: opacity 0.3s; }
         .radio-group { display: flex; justify-content: space-around; margin-top: 5px; }
     </style>
@@ -139,7 +141,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v4.8</div>
+            <div class="version-tag">v5.1</div>
 
             <h3>Visualisation Relativiste</h3>
             
@@ -210,14 +212,14 @@
                     <div class="tooltip">
                         <strong>Charge Retardée (Passé)</strong>
                         Position de la particule au temps passé $t' = t - R/c$.<br>
-                        C'est de cet endroit qu'est partie l'onde électromagnétique que l'observateur reçoit maintenant.
+                        C'est de cet endroit qu'est partie l'onde électromagnétique que l'observateur reçoit à l'instant actuel $t$.
                     </div>
                 </div>
                 <div class="row">
                     <input type="checkbox" id="chkShowVirtual" checked><span class="dot" style="background:magenta;"></span><label for="chkShowVirtual" class="info-label">Virtuelle</label>
                     <div class="tooltip">
                         <strong>Charge Virtuelle (Extrapolée)</strong>
-                        Position qu'aurait la charge <strong>maintenant</strong> si elle avait continué tout droit à vitesse constante.<br>
+                        Position qu'aurait la charge <strong>à l'instant actuel $t$</strong> si elle avait continué tout droit à vitesse constante.<br>
                         <em>Physique : Le champ électrique "proche" pointe vers cette position.</em>
                     </div>
                 </div>
@@ -315,7 +317,7 @@
     let targetBeta = 0.30; 
     
     // VISUAL CONSTANTS
-    let visualZoom = 3.5; // Controls the "Camera Zoom"
+    let visualZoom = 3.5; 
 
     let mouse = { x: 0, y: 0 };
     let N = 150; 
@@ -330,17 +332,15 @@
         toggleBtn.textContent = controls.classList.contains('collapsed') ? '▶' : '◀';
     });
 
-    // ZOOM LOGIC (Visual Only)
     function changeZoom(delta) {
         visualZoom += delta;
-        // LIMITE ETENDUE : Permet de dézoomer beaucoup plus (jusqu'à 0.1)
-        if(visualZoom < 0.1) visualZoom = 0.1;
-        if(visualZoom > 10.0) visualZoom = 10.0;
-        initLineSeeds(); // Reset field lines on zoom
+        if(visualZoom < 0.1) visualZoom = 0.1; // Allow deeper zoom out
+        if(visualZoom > 15.0) visualZoom = 15.0;
+        initLineSeeds(); 
         updateURL();
     }
-    btnZoomIn.addEventListener('click', () => changeZoom(0.2));
-    btnZoomOut.addEventListener('click', () => changeZoom(-0.2));
+    btnZoomIn.addEventListener('click', () => changeZoom(0.5));
+    btnZoomOut.addEventListener('click', () => changeZoom(-0.5));
 
     chkShowScope.addEventListener('change', () => {
         scopeContainer.style.display = chkShowScope.checked ? 'flex' : 'none';
@@ -378,7 +378,6 @@
         if(params.has('smap')) chkPoynting.checked = (params.get('smap') === '1');
     }
 
-    // FREQ depends on R_PHY (Constant) => Freq is Constant
     function updateFreq() { freq = (targetBeta * c) / (R_PHY * amp); }
 
     nSlider.addEventListener('input', function() { N = parseInt(this.value); nValue.textContent = N; initParticles(); updateURL(); });
@@ -509,8 +508,6 @@
     function computeFieldAt(x, y) {
         let res = { total: {x:0, y:0}, coulomb: {x:0, y:0}, rad: {x:0, y:0}, Bz: 0, count: 0 };
         let gammaApprox = 1 / Math.sqrt(1 - targetBeta*targetBeta);
-        
-        // VisualK fixed for R_PHY = 40
         let visualK = K_BASE_REF * (150/40) * 1.5 / (gammaApprox * 0.5 + 0.5); 
 
         for(let i=0; i<N; i++) {
@@ -610,22 +607,31 @@
         drawLine(scopeData.S, '#00FF00', scopeMax.S);
     }
 
+    // STRICT FILTERING FOR STREAMLINES
     function drawContinuousStreamlines() {
         ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255, 230, 150, 0.6)'; 
         const MAX_STEPS = 200; const STEP_SIZE = 8; ctx.beginPath();
         for (let seed of lineSeeds) {
             let pointsForward = []; let cx = seed.x, cy = seed.y; pointsForward.push({x: cx, y: cy});
             for(let k=0; k<MAX_STEPS; k++) {
-                let rawField = computeFieldAt(cx, cy); let v = getFilteredVector(rawField, cx, cy);
-                let mag = Math.sqrt(v.x*v.x + v.y*v.y); if(mag < 0.0001) break;
+                let rawField = computeFieldAt(cx, cy); 
+                // CRUCIAL: Use filtered vector for streamline direction
+                let v = getFilteredVector(rawField, cx, cy);
+                let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
+                // Stop drawing if selected field is negligible (visual filtering)
+                if(mag < 0.00001) break; 
+                
                 cx += (v.x / mag) * STEP_SIZE; cy += (v.y / mag) * STEP_SIZE;
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break; 
                 pointsForward.push({x: cx, y: cy});
             }
             let pointsBackward = []; cx = seed.x; cy = seed.y;
             for(let k=0; k<MAX_STEPS; k++) {
-                let rawField = computeFieldAt(cx, cy); let v = getFilteredVector(rawField, cx, cy);
-                let mag = Math.sqrt(v.x*v.x + v.y*v.y); if(mag < 0.0001) break;
+                let rawField = computeFieldAt(cx, cy); 
+                let v = getFilteredVector(rawField, cx, cy);
+                let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
+                if(mag < 0.00001) break;
+
                 cx -= (v.x / mag) * STEP_SIZE; cy -= (v.y / mag) * STEP_SIZE;
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break;
                 pointsBackward.push({x: cx, y: cy});
