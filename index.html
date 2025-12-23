@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Heaviside-Feynman v7.0 : Légendes Graphiques</title>
+    <title>Heaviside-Feynman v7.1</title>
     
     <script>
     window.MathJax = {
@@ -129,17 +129,8 @@
         .disabled-section { opacity: 0.3; pointer-events: none; transition: opacity 0.3s; }
         .radio-group { display: flex; justify-content: space-around; margin-top: 5px; }
 
-        /* NEW CSS FOR INLINE ICONS */
-        .icon-inline {
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 5px;
-        }
-        .label-with-icon {
-            display: flex;
-            align-items: center;
-            font-weight: bold;
-        }
+        .icon-inline { display: inline-block; vertical-align: middle; margin-left: 5px; }
+        .label-with-icon { display: flex; align-items: center; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -152,7 +143,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v7.0</div>
+            <div class="version-tag">v7.1</div>
 
             <h3>Visualisation Relativiste</h3>
             
@@ -268,7 +259,7 @@
                     <input type="checkbox" id="chkShowVirtual" checked><span class="dot" style="background:magenta;"></span><label for="chkShowVirtual" class="info-label">Virtuelle</label>
                     <div class="tooltip">
                         <strong>Charge Virtuelle (Extrapolée)</strong>
-                        Position qu'aurait la charge <strong>à l'instant actuel $t$</strong> si elle avait continué tout droit à vitesse constante.<br>
+                        Position qu'aurait la charge à l'instant actuel $t$ si elle avait continué tout droit à vitesse constante.<br>
                         <em>Physique : Le champ électrique "proche" pointe vers cette position.</em>
                     </div>
                 </div>
@@ -732,16 +723,20 @@
         for (let seed of lineSeeds) {
             let pointsForward = []; let cx = seed.x, cy = seed.y; pointsForward.push({x: cx, y: cy});
             for(let k=0; k<MAX_STEPS; k++) {
-                let rawField = computeFieldAt(cx, cy); let v = getFilteredVector(rawField, cx, cy);
-                let mag = Math.sqrt(v.x*v.x + v.y*v.y); if(mag < 0.00001) break; 
+                let rawField = computeFieldAt(cx, cy); 
+                let v = getFilteredVector(rawField, cx, cy);
+                let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
+                if(mag < 0.00001) break; 
                 cx += (v.x / mag) * STEP_SIZE; cy += (v.y / mag) * STEP_SIZE;
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break; 
                 pointsForward.push({x: cx, y: cy});
             }
             let pointsBackward = []; cx = seed.x; cy = seed.y;
             for(let k=0; k<MAX_STEPS; k++) {
-                let rawField = computeFieldAt(cx, cy); let v = getFilteredVector(rawField, cx, cy);
-                let mag = Math.sqrt(v.x*v.x + v.y*v.y); if(mag < 0.00001) break;
+                let rawField = computeFieldAt(cx, cy); 
+                let v = getFilteredVector(rawField, cx, cy);
+                let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
+                if(mag < 0.00001) break;
                 cx -= (v.x / mag) * STEP_SIZE; cy -= (v.y / mag) * STEP_SIZE;
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break;
                 pointsBackward.push({x: cx, y: cy});
