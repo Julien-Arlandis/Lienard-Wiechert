@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Heaviside-Feynman v7.1</title>
+    <title>Heaviside-Feynman v7.2 : Temps Réel Interactif</title>
     
     <script>
     window.MathJax = {
@@ -143,7 +143,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v7.1</div>
+            <div class="version-tag">v7.2</div>
 
             <h3>Visualisation Relativiste</h3>
             
@@ -563,6 +563,7 @@
             p.x = nextX; p.y = nextY;
             histories[0].unshift({ x: p.x, y: p.y, vx: p.vx, vy: p.vy, ax: p.ax, ay: p.ay, t: globalTime });
             if (histories[0].length > MAX_HISTORY) histories[0].pop();
+            // IMPORTANT: Allow continuous draw even when paused check is true
             return;
         }
 
@@ -723,20 +724,16 @@
         for (let seed of lineSeeds) {
             let pointsForward = []; let cx = seed.x, cy = seed.y; pointsForward.push({x: cx, y: cy});
             for(let k=0; k<MAX_STEPS; k++) {
-                let rawField = computeFieldAt(cx, cy); 
-                let v = getFilteredVector(rawField, cx, cy);
-                let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
-                if(mag < 0.00001) break; 
+                let rawField = computeFieldAt(cx, cy); let v = getFilteredVector(rawField, cx, cy);
+                let mag = Math.sqrt(v.x*v.x + v.y*v.y); if(mag < 0.00001) break; 
                 cx += (v.x / mag) * STEP_SIZE; cy += (v.y / mag) * STEP_SIZE;
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break; 
                 pointsForward.push({x: cx, y: cy});
             }
             let pointsBackward = []; cx = seed.x; cy = seed.y;
             for(let k=0; k<MAX_STEPS; k++) {
-                let rawField = computeFieldAt(cx, cy); 
-                let v = getFilteredVector(rawField, cx, cy);
-                let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
-                if(mag < 0.00001) break;
+                let rawField = computeFieldAt(cx, cy); let v = getFilteredVector(rawField, cx, cy);
+                let mag = Math.sqrt(v.x*v.x + v.y*v.y); if(mag < 0.00001) break;
                 cx -= (v.x / mag) * STEP_SIZE; cy -= (v.y / mag) * STEP_SIZE;
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break;
                 pointsBackward.push({x: cx, y: cy});
@@ -755,7 +752,13 @@
         try {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.fillRect(0, 0, width, height);
             ctx.save(); ctx.translate(width / 2, height / 2);
-            if (!chkPauseTrace.checked) updatePhysics();
+            
+            // KEY LOGIC: If Manual, always update physics to follow mouse.
+            // If Auto, update only if not paused.
+            if (isManualMode || !chkPauseTrace.checked) {
+                updatePhysics();
+            }
+            
             ctx.globalAlpha = 1.0; ctx.setLineDash([]);
             
             if (!isManualMode) {
