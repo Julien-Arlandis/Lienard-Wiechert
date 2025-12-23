@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Heaviside-Feynman v5.1</title>
+    <title>Heaviside-Feynman v6.2 : URL Complète</title>
     
     <script>
     window.MathJax = {
@@ -15,7 +15,7 @@
     
     <style>
         body { margin: 0; overflow: hidden; background: #000; color: white; font-family: sans-serif; }
-        canvas { display: block; }
+        canvas { display: block; cursor: crosshair; }
         
         #controls { 
             position: absolute; top: 10px; left: 10px; 
@@ -115,7 +115,6 @@
         mjx-container { font-size: 85% !important; color: #eee !important; overflow-x: hidden; margin: 2px 0 !important; }
 
         .info-label { cursor: help; }
-        
         .tooltip {
             visibility: hidden; width: 260px; background-color: #111; color: #eee; text-align: left; 
             border-radius: 6px; padding: 12px; position: absolute; z-index: 100; top: 100%; left: 10px; 
@@ -141,7 +140,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v5.1</div>
+            <div class="version-tag">v6.2 (Full URL)</div>
 
             <h3>Visualisation Relativiste</h3>
             
@@ -152,30 +151,43 @@
             
             <hr>
             
-            <div style="font-weight:bold; color:#ffaa00; margin-bottom:5px;">GÉOMÉTRIE DES CHARGES</div>
-            <div class="group-box" style="background:rgba(255, 170, 0, 0.1); border:1px solid #960;">
+            <div style="font-weight:bold; color:#00aaff; margin-bottom:5px;">MODE DE CONTRÔLE</div>
+            <div class="group-box" style="background:rgba(0, 170, 255, 0.1); border:1px solid #005588;">
                 <div class="radio-group">
-                    <div><input type="radio" id="geoRing" name="geometry" value="ring" checked><label for="geoRing" style="font-weight:bold;">Anneau</label></div>
-                    <div><input type="radio" id="geoWire" name="geometry" value="wire"><label for="geoWire" style="font-weight:bold;">Fil Rectiligne</label></div>
+                    <div><input type="radio" id="modeAuto" name="modeCtrl" value="auto" checked><label for="modeAuto" style="font-weight:bold;">Auto (Scénario)</label></div>
+                    <div><input type="radio" id="modeManual" name="modeCtrl" value="manual"><label for="modeManual" style="font-weight:bold;">Manuel (Souris)</label></div>
+                </div>
+                <div id="manualHint" style="display:none; margin-top:5px; font-size:11px; color:#aaa; font-style:italic; text-align:center;">
+                    Bougez la souris pour créer le champ.
                 </div>
             </div>
 
             <hr>
+            
+            <div id="autoControls">
+                <div style="font-weight:bold; color:#ffaa00; margin-bottom:5px;">GÉOMÉTRIE DES CHARGES</div>
+                <div class="group-box" style="background:rgba(255, 170, 0, 0.1); border:1px solid #960;">
+                    <div class="radio-group">
+                        <div><input type="radio" id="geoRing" name="geometry" value="ring" checked><label for="geoRing" style="font-weight:bold;">Anneau</label></div>
+                        <div><input type="radio" id="geoWire" name="geometry" value="wire"><label for="geoWire" style="font-weight:bold;">Fil Rectiligne</label></div>
+                    </div>
+                </div>
+                <hr>
+                
+                <label for="betaSlider" style="margin-top:5px; display:block;">Vitesse des charges (&beta;) : <span id="betaValue" class="val">0.30</span></label>
+                <input type="range" id="betaSlider" min="0.1" max="0.95" step="0.01" value="0.30">
+                
+                <label for="nSlider" style="margin-top:2px; display:block;">Nombre de charges : <span id="nValue" class="val">150</span></label>
+                <input type="range" id="nSlider" min="1" max="350" value="150">
+                <hr>
+            </div>
             
             <div class="group-box" style="border: 1px solid #aaa; background: rgba(0,0,0,0.5);">
                 <div class="row">
                     <input type="checkbox" id="chkShowScope">
-                    <label for="chkShowScope" style="font-weight:bold; color: orange;">Afficher l'Oscilloscope (Souris)</label>
+                    <label for="chkShowScope" style="font-weight:bold; color: orange;">Afficher l'Oscilloscope</label>
                 </div>
             </div>
-
-            <hr>
-            
-            <label for="betaSlider" style="margin-top:5px; display:block;">Vitesse des charges (&beta;) : <span id="betaValue" class="val">0.30</span></label>
-            <input type="range" id="betaSlider" min="0.1" max="0.95" step="0.01" value="0.30">
-            
-            <label for="nSlider" style="margin-top:2px; display:block;">Nombre de charges : <span id="nValue" class="val">150</span></label>
-            <input type="range" id="nSlider" min="1" max="350" value="150">
 
             <hr>
             <div style="font-weight:bold; color:#eee; margin-bottom:5px; text-align:center;">MODES DE VISUALISATION</div>
@@ -251,7 +263,7 @@
     
     <div id="scope-container">
         <div id="scope-header">
-            <span>Signal Normalisé (à la Souris)</span>
+            <span id="scopeTitle">Signal à l'Observateur</span>
             <div>
                 <span class="legend-item" style="color:#FFFF00;">E</span>
                 <span class="legend-item" style="color:#00CCFF;">B</span>
@@ -271,24 +283,26 @@
     const toggleBtn = document.getElementById('toggle-btn');
     const nSlider = document.getElementById('nSlider'); const nValue = document.getElementById('nValue');
     const betaSlider = document.getElementById('betaSlider'); const betaValue = document.getElementById('betaValue');
+    const autoControls = document.getElementById('autoControls');
     
     const btnZoomIn = document.getElementById('btnZoomIn');
     const btnZoomOut = document.getElementById('btnZoomOut');
 
     const geoRingBtn = document.getElementById('geoRing'); const geoWireBtn = document.getElementById('geoWire');
+    const modeAutoBtn = document.getElementById('modeAuto'); const modeManualBtn = document.getElementById('modeManual');
+    const manualHint = document.getElementById('manualHint');
+    
     let geometry = 'ring'; 
+    let isManualMode = false;
 
     const chkShowScope = document.getElementById('chkShowScope'); 
     const scopeContainer = document.getElementById('scope-container');
+    const scopeTitle = document.getElementById('scopeTitle');
 
     const chkPauseTrace = document.getElementById('chkPauseTrace');
-    const boxPauseTrace = document.getElementById('boxPauseTrace');
     const chkFieldMap = document.getElementById('chkFieldMap');
-    const boxFieldMap = document.getElementById('boxFieldMap');
     const chkMagneticMap = document.getElementById('chkMagneticMap'); 
-    const boxMagneticMap = document.getElementById('boxMagneticMap');
     const chkPoynting = document.getElementById('chkPoynting');
-    const boxPoynting = document.getElementById('boxPoynting');
     
     const chkCoulombRad = document.getElementById('chkCoulombRad');
     const chkCoulombOrtho = document.getElementById('chkCoulombOrtho');
@@ -308,24 +322,28 @@
 
     let width, height;
     const c = 6;            
-    
-    // PHYSICS CONSTANTS
-    const R_PHY = 40; // PHYSICAL Radius (fixed physics)
+    const R_PHY = 40; 
     const K_BASE_REF = 4000;
     const amp = 0.25; 
     let freq = 0.03; 
     let targetBeta = 0.30; 
     
-    // VISUAL CONSTANTS
     let visualZoom = 3.5; 
 
+    // MOUSE & PROBE
     let mouse = { x: 0, y: 0 };
+    // Fixed probe position in Physical Coords (initially)
+    let probe = { x: 200, y: 0 }; 
+
     let N = 150; 
     let particles = [];
     let histories = []; 
     const MAX_HISTORY = 600; 
     let globalTime = 0;
     let lineSeeds = [];
+
+    // MANUAL CONTROL VARS
+    let manualCharge = { x: 0, y: 0, vx: 0, vy: 0 };
 
     toggleBtn.addEventListener('click', () => {
         controls.classList.toggle('collapsed');
@@ -334,7 +352,7 @@
 
     function changeZoom(delta) {
         visualZoom += delta;
-        if(visualZoom < 0.1) visualZoom = 0.1; // Allow deeper zoom out
+        if(visualZoom < 0.1) visualZoom = 0.1; 
         if(visualZoom > 15.0) visualZoom = 15.0;
         initLineSeeds(); 
         updateURL();
@@ -347,40 +365,31 @@
         updateURL();
     });
 
-    function updateURL() {
-        const params = new URLSearchParams();
-        params.set('beta', betaSlider.value); params.set('n', nSlider.value); params.set('z', visualZoom.toFixed(1));
-        params.set('geo', geometry);
-        params.set('scope', chkShowScope.checked ? '1' : '0');
-        params.set('lines', chkPauseTrace.checked ? '1' : '0');
-        params.set('emap', chkFieldMap.checked ? '1' : '0');
-        params.set('bmap', chkMagneticMap.checked ? '1' : '0');
-        params.set('smap', chkPoynting.checked ? '1' : '0');
-        window.history.replaceState({}, '', `${location.pathname}?${params}`);
-    }
-
-    function loadFromURL() {
-        const params = new URLSearchParams(window.location.search);
-        if(!params.has('beta')) return; 
-        if(params.has('beta')) { let val = parseFloat(params.get('beta')); betaSlider.value = val; targetBeta = val; betaValue.textContent = val.toFixed(2); }
-        if(params.has('n')) { let val = parseInt(params.get('n')); nSlider.value = val; N = val; nValue.textContent = val; }
-        if(params.has('z')) { let val = parseFloat(params.get('z')); visualZoom = val; }
-        if(params.has('geo')) { let g = params.get('geo'); if(g === 'wire') { geoWireBtn.checked = true; geometry = 'wire'; } else { geoRingBtn.checked = true; geometry = 'ring'; } }
-        
-        if(params.has('scope')) { 
-            chkShowScope.checked = (params.get('scope') === '1'); 
-            scopeContainer.style.display = chkShowScope.checked ? 'flex' : 'none';
+    // MODE SWITCHING
+    function updateMode() {
+        isManualMode = modeManualBtn.checked;
+        if(isManualMode) {
+            autoControls.classList.add('disabled-section');
+            manualHint.style.display = 'block';
+            N = 1; 
+            probe.x = 150 / visualZoom; // Reset probe pos relative to current zoom? No, fixed physical pos is better
+            probe.x = 60; probe.y = 0; // Fixed physical spot
+            scopeTitle.textContent = "Signal à l'Observateur (Centre)";
+        } else {
+            autoControls.classList.remove('disabled-section');
+            manualHint.style.display = 'none';
+            N = parseInt(nSlider.value);
+            scopeTitle.textContent = "Signal à la Souris";
         }
-
-        if(params.has('lines')) chkPauseTrace.checked = (params.get('lines') === '1');
-        if(params.has('emap')) chkFieldMap.checked = (params.get('emap') === '1');
-        if(params.has('bmap')) chkMagneticMap.checked = (params.get('bmap') === '1');
-        if(params.has('smap')) chkPoynting.checked = (params.get('smap') === '1');
+        initParticles();
+        updateURL();
     }
+    modeAutoBtn.addEventListener('change', updateMode);
+    modeManualBtn.addEventListener('change', updateMode);
 
     function updateFreq() { freq = (targetBeta * c) / (R_PHY * amp); }
 
-    nSlider.addEventListener('input', function() { N = parseInt(this.value); nValue.textContent = N; initParticles(); updateURL(); });
+    nSlider.addEventListener('input', function() { if(!isManualMode) { N = parseInt(this.value); nValue.textContent = N; initParticles(); updateURL(); } });
     betaSlider.addEventListener('input', function() { targetBeta = parseFloat(this.value); betaValue.textContent = targetBeta.toFixed(2); updateFreq(); updateURL(); });
 
     geoRingBtn.addEventListener('change', () => { if(geoRingBtn.checked) { geometry = 'ring'; initParticles(); updateURL(); } });
@@ -417,32 +426,135 @@
         mouse.y = e.clientY - rect.top - height / 2;
     });
 
-    loadFromURL(); updateFreq(); initParticles(); initLineSeeds(); updateUIVisibility();
+    // URL MANAGEMENT
+    function updateURL() {
+        const params = new URLSearchParams();
+        params.set('beta', betaSlider.value);
+        params.set('n', nSlider.value);
+        params.set('z', visualZoom.toFixed(2));
+        params.set('geo', geometry);
+        params.set('mode', isManualMode ? 'manual' : 'auto');
+        params.set('scope', chkShowScope.checked ? '1' : '0');
+        // Visu
+        params.set('lines', chkPauseTrace.checked ? '1' : '0');
+        params.set('emap', chkFieldMap.checked ? '1' : '0');
+        params.set('bmap', chkMagneticMap.checked ? '1' : '0');
+        params.set('smap', chkPoynting.checked ? '1' : '0');
+        // Points
+        params.set('real', chkShowReal.checked ? '1' : '0');
+        params.set('ret', chkShowRetarded.checked ? '1' : '0');
+        params.set('virt', chkShowVirtual.checked ? '1' : '0');
+        // Filters
+        params.set('crad', chkCoulombRad.checked ? '1' : '0');
+        params.set('corth', chkCoulombOrtho.checked ? '1' : '0');
+        params.set('rrad', chkRadRad.checked ? '1' : '0');
+        params.set('rorth', chkRadOrtho.checked ? '1' : '0');
+
+        window.history.replaceState({}, '', `${location.pathname}?${params}`);
+    }
+
+    function loadFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        if(!params.has('beta')) return; 
+        
+        if(params.has('beta')) { let val = parseFloat(params.get('beta')); betaSlider.value = val; targetBeta = val; betaValue.textContent = val.toFixed(2); }
+        if(params.has('n')) { let val = parseInt(params.get('n')); nSlider.value = val; N = val; nValue.textContent = val; }
+        if(params.has('z')) { let val = parseFloat(params.get('z')); visualZoom = val; }
+        
+        if(params.has('geo')) { let g = params.get('geo'); if(g === 'wire') { geoWireBtn.checked = true; geometry = 'wire'; } else { geoRingBtn.checked = true; geometry = 'ring'; } }
+        
+        if(params.has('mode')) {
+            let m = params.get('mode');
+            if(m === 'manual') { modeManualBtn.checked = true; isManualMode = true; }
+            else { modeAutoBtn.checked = true; isManualMode = false; }
+            updateMode(); // Apply mode UI changes
+        }
+
+        if(params.has('scope')) { 
+            chkShowScope.checked = (params.get('scope') === '1'); 
+            scopeContainer.style.display = chkShowScope.checked ? 'flex' : 'none';
+        }
+
+        if(params.has('lines')) chkPauseTrace.checked = (params.get('lines') === '1');
+        if(params.has('emap')) chkFieldMap.checked = (params.get('emap') === '1');
+        if(params.has('bmap')) chkMagneticMap.checked = (params.get('bmap') === '1');
+        if(params.has('smap')) chkPoynting.checked = (params.get('smap') === '1');
+        
+        if(params.has('real')) chkShowReal.checked = (params.get('real') === '1');
+        if(params.has('ret')) chkShowRetarded.checked = (params.get('ret') === '1');
+        if(params.has('virt')) chkShowVirtual.checked = (params.get('virt') === '1');
+        
+        if(params.has('crad')) chkCoulombRad.checked = (params.get('crad') === '1');
+        if(params.has('corth')) chkCoulombOrtho.checked = (params.get('corth') === '1');
+        if(params.has('rrad')) chkRadRad.checked = (params.get('rrad') === '1');
+        if(params.has('rorth')) chkRadOrtho.checked = (params.get('rorth') === '1');
+    }
+
+    updateFreq(); loadFromURL(); initParticles(); initLineSeeds(); updateUIVisibility();
 
     function initParticles() {
         particles = []; histories = []; 
         scopeData = { E:[], B:[], S:[] }; scopeMax = { E: 0.0001, B: 0.0001, S: 0.0001 };
-        
-        if (geometry === 'ring') {
-            for(let i=0; i<N; i++) {
-                let baseAngle = (Math.PI * 2 * i) / N;
-                particles.push({ mode: 'ring', baseAngle: baseAngle, phaseOffset: 0, x:0, y:0, vx:0, vy:0, ax:0, ay:0 });
-                histories.push([]); 
-            }
+        manualCharge = { x: 0, y: 0, vx: 0, vy: 0 };
+
+        if (isManualMode) {
+            particles.push({ mode: 'manual', x:0, y:0, vx:0, vy:0, ax:0, ay:0 });
+            histories.push([]);
         } else {
-            for(let i=0; i<N; i++) {
-                let t = (N > 1) ? i / (N - 1) : 0.5; 
-                let baseY = -R_PHY + t * (2 * R_PHY);
-                particles.push({ mode: 'wire', baseY: baseY, phaseOffset: 0, x:0, y:0, vx:0, vy:0, ax:0, ay:0 });
-                histories.push([]);
+            if (geometry === 'ring') {
+                for(let i=0; i<N; i++) {
+                    let baseAngle = (Math.PI * 2 * i) / N;
+                    particles.push({ mode: 'ring', baseAngle: baseAngle, phaseOffset: 0, x:0, y:0, vx:0, vy:0, ax:0, ay:0 });
+                    histories.push([]); 
+                }
+            } else {
+                for(let i=0; i<N; i++) {
+                    let t = (N > 1) ? i / (N - 1) : 0.5; 
+                    let baseY = -R_PHY + t * (2 * R_PHY);
+                    particles.push({ mode: 'wire', baseY: baseY, phaseOffset: 0, x:0, y:0, vx:0, vy:0, ax:0, ay:0 });
+                    histories.push([]);
+                }
             }
         }
     }
 
     function updatePhysics() {
         globalTime++;
-        if(particles.length !== N) { initParticles(); return; }
+        if(particles.length === 0) return;
 
+        // MANUAL MODE LOGIC
+        if (isManualMode) {
+            let p = particles[0];
+            let tx = mouse.x / visualZoom;
+            let ty = mouse.y / visualZoom;
+            
+            let smooth = 0.15;
+            let nextX = p.x + (tx - p.x) * smooth;
+            let nextY = p.y + (ty - p.y) * smooth;
+            
+            let newVx = nextX - p.x; 
+            let newVy = nextY - p.y;
+            
+            let vMag = Math.sqrt(newVx*newVx + newVy*newVy);
+            let limit = c * 0.95; 
+            if(vMag > limit) {
+                newVx = (newVx / vMag) * limit;
+                newVy = (newVy / vMag) * limit;
+                nextX = p.x + newVx;
+                nextY = p.y + newVy;
+            }
+
+            p.ax = newVx - p.vx;
+            p.ay = newVy - p.vy;
+            p.vx = newVx; p.vy = newVy;
+            p.x = nextX; p.y = nextY;
+
+            histories[0].unshift({ x: p.x, y: p.y, vx: p.vx, vy: p.vy, ax: p.ax, ay: p.ay, t: globalTime });
+            if (histories[0].length > MAX_HISTORY) histories[0].pop();
+            return;
+        }
+
+        // AUTO MODE LOGIC
         for(let i=0; i<N; i++) {
             let p = particles[i];
             if (p.mode === 'ring') {
@@ -607,7 +719,6 @@
         drawLine(scopeData.S, '#00FF00', scopeMax.S);
     }
 
-    // STRICT FILTERING FOR STREAMLINES
     function drawContinuousStreamlines() {
         ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255, 230, 150, 0.6)'; 
         const MAX_STEPS = 200; const STEP_SIZE = 8; ctx.beginPath();
@@ -615,12 +726,9 @@
             let pointsForward = []; let cx = seed.x, cy = seed.y; pointsForward.push({x: cx, y: cy});
             for(let k=0; k<MAX_STEPS; k++) {
                 let rawField = computeFieldAt(cx, cy); 
-                // CRUCIAL: Use filtered vector for streamline direction
                 let v = getFilteredVector(rawField, cx, cy);
                 let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
-                // Stop drawing if selected field is negligible (visual filtering)
                 if(mag < 0.00001) break; 
-                
                 cx += (v.x / mag) * STEP_SIZE; cy += (v.y / mag) * STEP_SIZE;
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break; 
                 pointsForward.push({x: cx, y: cy});
@@ -631,7 +739,6 @@
                 let v = getFilteredVector(rawField, cx, cy);
                 let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
                 if(mag < 0.00001) break;
-
                 cx -= (v.x / mag) * STEP_SIZE; cy -= (v.y / mag) * STEP_SIZE;
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break;
                 pointsBackward.push({x: cx, y: cy});
@@ -655,24 +762,31 @@
             
             ctx.globalAlpha = 1.0; ctx.setLineDash([]);
             
-            if (geometry === 'ring') {
-                let oscAngle = amp * Math.sin(globalTime * freq);
-                ctx.beginPath();
-                let bx = (R_PHY * visualZoom) * Math.cos(oscAngle); 
-                let by = (R_PHY * visualZoom) * Math.sin(oscAngle);
-                ctx.moveTo(-bx, -by); ctx.lineTo(bx, by);
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 4; ctx.stroke();
-                ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
+            // DRAW GEOMETRY
+            if (!isManualMode) {
+                if (geometry === 'ring') {
+                    let oscAngle = amp * Math.sin(globalTime * freq);
+                    ctx.beginPath();
+                    let bx = (R_PHY * visualZoom) * Math.cos(oscAngle); 
+                    let by = (R_PHY * visualZoom) * Math.sin(oscAngle);
+                    ctx.moveTo(-bx, -by); ctx.lineTo(bx, by);
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'; ctx.lineWidth = 4; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
+                } else {
+                    let spatialAmp = (c * targetBeta) / freq; if(spatialAmp > R_PHY*0.8) spatialAmp = R_PHY*0.8;
+                    let oscY = (spatialAmp * visualZoom) * Math.sin(globalTime * freq);
+                    ctx.beginPath(); ctx.arc(0, oscY, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
+                }
             } else {
-                let spatialAmp = (c * targetBeta) / freq; if(spatialAmp > R_PHY*0.8) spatialAmp = R_PHY*0.8;
-                let oscY = (spatialAmp * visualZoom) * Math.sin(globalTime * freq);
-                ctx.beginPath(); ctx.arc(0, oscY, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
+                // Manual Mode: NO TARGET DRAWN (Invisible Probe)
             }
 
             let safeN = Math.max(N, 1); 
 
+            // STEP 20 for High Density Grid
+            const step = 20; 
+
             if (chkMagneticMap.checked) {
-                const step = 40; 
                 const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
                 const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
                 const B_SCALE_FACTOR = 800 / Math.sqrt(safeN); 
@@ -692,7 +806,6 @@
             }
 
             if (chkFieldMap.checked) {
-                const step = 40; 
                 const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
                 const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
                 const MAX_ARROW_LEN = step * 0.95;
@@ -718,7 +831,6 @@
             }
 
             if (chkPoynting.checked) {
-                const step = 40; 
                 const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
                 const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
                 const MAX_S_LEN = step * 0.9;
@@ -756,8 +868,14 @@
                             ctx.arc(p.x * visualZoom, p.y * visualZoom, 3, 0, Math.PI*2); ctx.fill(); 
                         }
                         if(!chkPauseTrace.checked) {
+                            // Target depends on Mode: Mouse in Auto, Probe in Manual?
+                            // No: "Retarded position" is relative to "the Observer".
+                            // In Auto mode, Mouse is observer. In Manual mode, Probe is observer.
+                            let obsX = isManualMode ? (probe.x * visualZoom) : mouse.x;
+                            let obsY = isManualMode ? (probe.y * visualZoom) : mouse.y;
+
                             if(chkShowRetarded.checked || chkShowVirtual.checked) {
-                                let ret = getRetardedState(i, mouse.x, mouse.y);
+                                let ret = getRetardedState(i, obsX, obsY);
                                 if(ret) {
                                     if(chkShowRetarded.checked) { 
                                         ctx.fillStyle = 'cyan'; ctx.beginPath(); 
@@ -777,23 +895,37 @@
                 }
             }
             
-            if (chkShowScope.checked && isFinite(mouse.x) && isFinite(mouse.y)) {
-                let field = computeFieldAt(mouse.x, mouse.y); 
-                try {
-                    let eMag = Math.sqrt(field.total.x**2 + field.total.y**2);
-                    let bMag = Math.abs(field.Bz);
-                    let sMag = eMag * bMag;
-                    drawScope(eMag, bMag, sMag); 
-                } catch(err) {}
+            // SCOPE LOGIC (DEPENDS ON MODE)
+            if (chkShowScope.checked) {
+                let obsX = isManualMode ? (probe.x * visualZoom) : mouse.x;
+                let obsY = isManualMode ? (probe.y * visualZoom) : mouse.y;
+                
+                if(isFinite(obsX) && isFinite(obsY)) {
+                    let field = computeFieldAt(obsX, obsY); 
+                    try {
+                        let eMag = Math.sqrt(field.total.x**2 + field.total.y**2);
+                        let bMag = Math.abs(field.Bz);
+                        let sMag = eMag * bMag;
+                        drawScope(eMag, bMag, sMag); 
+                    } catch(err) {}
+                }
             }
 
-            if (isFinite(mouse.x) && isFinite(mouse.y)) {
-                let field = computeFieldAt(mouse.x, mouse.y);
-                let v_filtered = getFilteredVector(field, mouse.x, mouse.y); 
+            // TOTAL VECTOR DRAWING (ALWAYS DRAW, even in manual)
+            // In manual mode, we draw at the center (probe location)
+            let obsX, obsY;
+            if (isManualMode) {
+                obsX = probe.x * visualZoom;
+                obsY = probe.y * visualZoom;
+            } else {
+                obsX = mouse.x;
+                obsY = mouse.y;
+            }
+
+            if (isFinite(obsX) && isFinite(obsY)) {
+                let field = computeFieldAt(obsX, obsY);
+                let v_filtered = getFilteredVector(field, obsX, obsY); 
                 if (field.count > 0) {
-                    let mouseDist = Math.sqrt(mouse.x*mouse.x + mouse.y*mouse.y);
-                    let u_r = { x: 0, y: 0 }; let u_theta = { x: 0, y: 0 };
-                    if (mouseDist > 0.1) { u_r.x = mouse.x / mouseDist; u_r.y = mouse.y / mouseDist; u_theta.x = -u_r.y; u_theta.y = u_r.x; }
                     let displayScale = 40 * Math.sqrt(10/safeN); 
                     
                     let v_C_rad = { x: dot(field.coulomb, u_r) * u_r.x * displayScale, y: dot(field.coulomb, u_r) * u_r.y * displayScale };
@@ -801,15 +933,15 @@
                     let v_R_rad = { x: dot(field.rad, u_r) * u_r.x * displayScale, y: dot(field.rad, u_r) * u_r.y * displayScale };
                     let v_R_orth = { x: dot(field.rad, u_theta) * u_theta.x * displayScale, y: dot(field.rad, u_theta) * u_theta.y * displayScale };
                     
-                    if (chkCoulombRad.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_C_rad.x, mouse.y + v_C_rad.y, '#00ff00', 1.5, 0.9);
-                    if (chkCoulombOrtho.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_C_orth.x, mouse.y + v_C_orth.y, '#66ff66', 1.5, 0.9);
-                    if (chkRadRad.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_R_rad.x, mouse.y + v_R_rad.y, '#ff3333', 1.5, 0.9);
-                    if (chkRadOrtho.checked) drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_R_orth.x, mouse.y + v_R_orth.y, '#ff8888', 1.5, 0.9);
+                    if (chkCoulombRad.checked) drawArrow(ctx, obsX, obsY, obsX + v_C_rad.x, obsY + v_C_rad.y, '#00ff00', 1.5, 0.9);
+                    if (chkCoulombOrtho.checked) drawArrow(ctx, obsX, obsY, obsX + v_C_orth.x, obsY + v_C_orth.y, '#66ff66', 1.5, 0.9);
+                    if (chkRadRad.checked) drawArrow(ctx, obsX, obsY, obsX + v_R_rad.x, obsY + v_R_rad.y, '#ff3333', 1.5, 0.9);
+                    if (chkRadOrtho.checked) drawArrow(ctx, obsX, obsY, obsX + v_R_orth.x, obsY + v_R_orth.y, '#ff8888', 1.5, 0.9);
 
                     let v_sum = { x: v_filtered.x * displayScale, y: v_filtered.y * displayScale };
                     let vSumLen = Math.sqrt(v_sum.x**2 + v_sum.y**2);
                     if (vSumLen > 0.001) {
-                        drawArrow(ctx, mouse.x, mouse.y, mouse.x + v_sum.x, mouse.y + v_sum.y, '#FFFF00', 2.5, 1.0);
+                        drawArrow(ctx, obsX, obsY, obsX + v_sum.x, obsY + v_sum.y, '#FFFF00', 2.5, 1.0);
                     }
                 }
             }
