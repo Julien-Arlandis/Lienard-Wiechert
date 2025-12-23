@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Heaviside-Feynman v6.2 : URL Complète</title>
+    <title>Heaviside-Feynman v7.0 : Légendes Graphiques</title>
     
     <script>
     window.MathJax = {
@@ -128,6 +128,18 @@
         
         .disabled-section { opacity: 0.3; pointer-events: none; transition: opacity 0.3s; }
         .radio-group { display: flex; justify-content: space-around; margin-top: 5px; }
+
+        /* NEW CSS FOR INLINE ICONS */
+        .icon-inline {
+            display: inline-block;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+        .label-with-icon {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -140,7 +152,7 @@
         <button id="toggle-btn" title="Réduire/Agrandir le panneau">◀</button>
 
         <div id="panel-content">
-            <div class="version-tag">v6.2 (Full URL)</div>
+            <div class="version-tag">v7.0</div>
 
             <h3>Visualisation Relativiste</h3>
             
@@ -197,15 +209,40 @@
             </div>
 
             <div class="group-box" id="boxMagneticMap" style="border: 1px solid #aaa; margin-top:5px; background:rgba(0,0,50,0.3);">
-                <div class="row"><input type="checkbox" id="chkMagneticMap"><label for="chkMagneticMap" style="color:#ccc; font-weight:bold;">Carte B ($\odot / \otimes$)</label></div>
+                <div class="row">
+                    <input type="checkbox" id="chkMagneticMap">
+                    <label for="chkMagneticMap" style="color:#ccc;" class="label-with-icon">
+                        Carte B
+                        <svg class="icon-inline" viewBox="0 0 24 12" style="width:24px; height:12px;">
+                            <circle cx="6" cy="6" r="5" fill="rgba(0, 200, 255, 0.8)"/>
+                            <circle cx="18" cy="6" r="5" fill="rgba(255, 200, 0, 0.8)"/>
+                        </svg>
+                    </label>
+                </div>
             </div>
 
             <div class="group-box" id="boxFieldMap" style="border: 1px solid #fff; margin-top:5px;">
-                <div class="row"><input type="checkbox" id="chkFieldMap"><label for="chkFieldMap" style="color:#fff; font-weight:bold;">Carte vectorielle E (Blanc)</label></div>
+                <div class="row">
+                    <input type="checkbox" id="chkFieldMap">
+                    <label for="chkFieldMap" style="color:#fff;" class="label-with-icon">
+                        Carte vectorielle E
+                        <svg class="icon-inline" viewBox="0 0 20 10" style="width:20px; height:10px;">
+                           <polygon points="0,4 13,4 13,1 20,5 13,9 13,6 0,6" fill="white"/>
+                        </svg>
+                    </label>
+                </div>
             </div>
 
             <div class="group-box" id="boxPoynting" style="border: 1px solid #0f0; margin-top:5px; background:rgba(0,255,0,0.1);">
-                <div class="row"><input type="checkbox" id="chkPoynting"><label for="chkPoynting" style="color:#0f0; font-weight:bold;">Flux d'Énergie S (Vert)</label></div>
+                <div class="row">
+                    <input type="checkbox" id="chkPoynting">
+                    <label for="chkPoynting" style="color:#0f0;" class="label-with-icon">
+                        Flux d'Énergie S
+                        <svg class="icon-inline" viewBox="0 0 20 10" style="width:20px; height:10px;">
+                           <polygon points="0,4 13,4 13,1 20,5 13,9 13,6 0,6" fill="#00ff00"/>
+                        </svg>
+                    </label>
+                </div>
             </div>
 
             <hr>
@@ -332,8 +369,7 @@
 
     // MOUSE & PROBE
     let mouse = { x: 0, y: 0 };
-    // Fixed probe position in Physical Coords (initially)
-    let probe = { x: 200, y: 0 }; 
+    let probe = { x: 60, y: 0 }; 
 
     let N = 150; 
     let particles = [];
@@ -342,7 +378,6 @@
     let globalTime = 0;
     let lineSeeds = [];
 
-    // MANUAL CONTROL VARS
     let manualCharge = { x: 0, y: 0, vx: 0, vy: 0 };
 
     toggleBtn.addEventListener('click', () => {
@@ -365,15 +400,13 @@
         updateURL();
     });
 
-    // MODE SWITCHING
     function updateMode() {
         isManualMode = modeManualBtn.checked;
         if(isManualMode) {
             autoControls.classList.add('disabled-section');
             manualHint.style.display = 'block';
             N = 1; 
-            probe.x = 150 / visualZoom; // Reset probe pos relative to current zoom? No, fixed physical pos is better
-            probe.x = 60; probe.y = 0; // Fixed physical spot
+            probe.x = 60; probe.y = 0; 
             scopeTitle.textContent = "Signal à l'Observateur (Centre)";
         } else {
             autoControls.classList.remove('disabled-section');
@@ -426,7 +459,6 @@
         mouse.y = e.clientY - rect.top - height / 2;
     });
 
-    // URL MANAGEMENT
     function updateURL() {
         const params = new URLSearchParams();
         params.set('beta', betaSlider.value);
@@ -435,21 +467,17 @@
         params.set('geo', geometry);
         params.set('mode', isManualMode ? 'manual' : 'auto');
         params.set('scope', chkShowScope.checked ? '1' : '0');
-        // Visu
         params.set('lines', chkPauseTrace.checked ? '1' : '0');
         params.set('emap', chkFieldMap.checked ? '1' : '0');
         params.set('bmap', chkMagneticMap.checked ? '1' : '0');
         params.set('smap', chkPoynting.checked ? '1' : '0');
-        // Points
         params.set('real', chkShowReal.checked ? '1' : '0');
         params.set('ret', chkShowRetarded.checked ? '1' : '0');
         params.set('virt', chkShowVirtual.checked ? '1' : '0');
-        // Filters
         params.set('crad', chkCoulombRad.checked ? '1' : '0');
         params.set('corth', chkCoulombOrtho.checked ? '1' : '0');
         params.set('rrad', chkRadRad.checked ? '1' : '0');
         params.set('rorth', chkRadOrtho.checked ? '1' : '0');
-
         window.history.replaceState({}, '', `${location.pathname}?${params}`);
     }
 
@@ -467,7 +495,7 @@
             let m = params.get('mode');
             if(m === 'manual') { modeManualBtn.checked = true; isManualMode = true; }
             else { modeAutoBtn.checked = true; isManualMode = false; }
-            updateMode(); // Apply mode UI changes
+            updateMode(); 
         }
 
         if(params.has('scope')) { 
@@ -522,19 +550,15 @@
         globalTime++;
         if(particles.length === 0) return;
 
-        // MANUAL MODE LOGIC
         if (isManualMode) {
             let p = particles[0];
             let tx = mouse.x / visualZoom;
             let ty = mouse.y / visualZoom;
-            
             let smooth = 0.15;
             let nextX = p.x + (tx - p.x) * smooth;
             let nextY = p.y + (ty - p.y) * smooth;
-            
             let newVx = nextX - p.x; 
             let newVy = nextY - p.y;
-            
             let vMag = Math.sqrt(newVx*newVx + newVy*newVy);
             let limit = c * 0.95; 
             if(vMag > limit) {
@@ -543,18 +567,14 @@
                 nextX = p.x + newVx;
                 nextY = p.y + newVy;
             }
-
-            p.ax = newVx - p.vx;
-            p.ay = newVy - p.vy;
+            p.ax = newVx - p.vx; p.ay = newVy - p.vy;
             p.vx = newVx; p.vy = newVy;
             p.x = nextX; p.y = nextY;
-
             histories[0].unshift({ x: p.x, y: p.y, vx: p.vx, vy: p.vy, ax: p.ax, ay: p.ay, t: globalTime });
             if (histories[0].length > MAX_HISTORY) histories[0].pop();
             return;
         }
 
-        // AUTO MODE LOGIC
         for(let i=0; i<N; i++) {
             let p = particles[i];
             if (p.mode === 'ring') {
@@ -604,10 +624,8 @@
         let hist = histories[particleIndex];
         if (hist.length === 0) return null;
         let searchLimit = Math.min(hist.length, 600);
-        
         let physX = obsX / visualZoom;
         let physY = obsY / visualZoom;
-
         for (let k = 0; k < searchLimit; k++) {
             let s = hist[k];
             let dx = physX - s.x; let dy = physY - s.y;
@@ -621,13 +639,12 @@
         let res = { total: {x:0, y:0}, coulomb: {x:0, y:0}, rad: {x:0, y:0}, Bz: 0, count: 0 };
         let gammaApprox = 1 / Math.sqrt(1 - targetBeta*targetBeta);
         let visualK = K_BASE_REF * (150/40) * 1.5 / (gammaApprox * 0.5 + 0.5); 
-
         for(let i=0; i<N; i++) {
             let ret = getRetardedState(i, x, y); 
             if (ret) {
                 res.count++;
                 let s = ret.state; let R = ret.R;
-                if(R < 1) R = 1; 
+                if(R < 2) R = 2; // CLAMP FOR SINGULARITY
                 let n = normalize(ret.vectorR);
                 let beta = { x: s.vx / c, y: s.vy / c }; let betaDot = { x: s.ax / c, y: s.ay / c }; 
                 let kappa = 1 - dot(n, beta); if(kappa < 0.01) kappa = 0.01;
@@ -656,9 +673,7 @@
         let u_r = {x:0, y:0}, u_theta = {x:0, y:0};
         let dist = Math.sqrt(x*x + y*y);
         if(dist > 0.001) { u_r.x = x / dist; u_r.y = y / dist; u_theta.x = -u_r.y; u_theta.y = u_r.x; }
-        
         window.u_r = u_r; window.u_theta = u_theta; 
-
         let finalVec = {x:0, y:0};
         if(chkCoulombRad.checked) { let val = dot(field.coulomb, u_r); finalVec.x += val * u_r.x; finalVec.y += val * u_r.y; }
         if(chkCoulombOrtho.checked) { let val = dot(field.coulomb, u_theta); finalVec.x += val * u_theta.x; finalVec.y += val * u_theta.y; }
@@ -671,9 +686,7 @@
         if (!isFinite(toX) || !isFinite(toY)) return;
         const dx = toX - fromX; const dy = toY - fromY; const len = Math.sqrt(dx*dx + dy*dy); if (len < 2) return;
         const headLength = 8 + lineWidth; const angle = Math.atan2(dy, dx); const headAngle = Math.PI / 9; 
-        
         ctx.save(); ctx.globalAlpha = opacity; 
-        
         if (isOutline) {
             ctx.strokeStyle = "#000000"; ctx.fillStyle = "#000000"; ctx.lineWidth = lineWidth + 2.5;
             ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
@@ -681,14 +694,14 @@
             ctx.lineTo(toX - headLength * Math.cos(angle - headAngle), toY - headLength * Math.sin(angle - headAngle));
             ctx.lineTo(toX - headLength * Math.cos(angle + headAngle), toY - headLength * Math.sin(angle + headAngle));
             ctx.closePath(); ctx.fill(); ctx.stroke();
-        } else {
-            ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lineWidth;
-            ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(toX, toY);
-            ctx.lineTo(toX - headLength * Math.cos(angle - headAngle), toY - headLength * Math.sin(angle - headAngle));
-            ctx.lineTo(toX - headLength * Math.cos(angle + headAngle), toY - headLength * Math.sin(angle + headAngle));
-            ctx.closePath(); ctx.fill();
-        }
+        } 
+        
+        ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = lineWidth;
+        ctx.beginPath(); ctx.moveTo(fromX, fromY); ctx.lineTo(toX, toY); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(toX, toY);
+        ctx.lineTo(toX - headLength * Math.cos(angle - headAngle), toY - headLength * Math.sin(angle - headAngle));
+        ctx.lineTo(toX - headLength * Math.cos(angle + headAngle), toY - headLength * Math.sin(angle + headAngle));
+        ctx.closePath(); ctx.fill();
         ctx.restore();
     }
 
@@ -696,13 +709,8 @@
         scopeData.E.push(eVal); if(scopeData.E.length > SCOPE_LEN) scopeData.E.shift();
         scopeData.B.push(bVal); if(scopeData.B.length > SCOPE_LEN) scopeData.B.shift();
         scopeData.S.push(sVal); if(scopeData.S.length > SCOPE_LEN) scopeData.S.shift();
-
-        scopeMax.E = Math.max(scopeMax.E, eVal);
-        scopeMax.B = Math.max(scopeMax.B, bVal);
-        scopeMax.S = Math.max(scopeMax.S, sVal);
-
+        scopeMax.E = Math.max(scopeMax.E, eVal); scopeMax.B = Math.max(scopeMax.B, bVal); scopeMax.S = Math.max(scopeMax.S, sVal);
         scopeCtx.fillStyle = '#000'; scopeCtx.fillRect(0, 0, scopeCanvas.width, scopeCanvas.height);
-        
         function drawLine(arr, color, maxVal) {
             scopeCtx.beginPath(); scopeCtx.strokeStyle = color; scopeCtx.lineWidth = 2;
             let step = scopeCanvas.width / SCOPE_LEN;
@@ -713,7 +721,6 @@
             }
             scopeCtx.stroke();
         }
-
         drawLine(scopeData.E, '#FFFF00', scopeMax.E);
         drawLine(scopeData.B, '#00CCFF', scopeMax.B);
         drawLine(scopeData.S, '#00FF00', scopeMax.S);
@@ -725,20 +732,16 @@
         for (let seed of lineSeeds) {
             let pointsForward = []; let cx = seed.x, cy = seed.y; pointsForward.push({x: cx, y: cy});
             for(let k=0; k<MAX_STEPS; k++) {
-                let rawField = computeFieldAt(cx, cy); 
-                let v = getFilteredVector(rawField, cx, cy);
-                let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
-                if(mag < 0.00001) break; 
+                let rawField = computeFieldAt(cx, cy); let v = getFilteredVector(rawField, cx, cy);
+                let mag = Math.sqrt(v.x*v.x + v.y*v.y); if(mag < 0.00001) break; 
                 cx += (v.x / mag) * STEP_SIZE; cy += (v.y / mag) * STEP_SIZE;
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break; 
                 pointsForward.push({x: cx, y: cy});
             }
             let pointsBackward = []; cx = seed.x; cy = seed.y;
             for(let k=0; k<MAX_STEPS; k++) {
-                let rawField = computeFieldAt(cx, cy); 
-                let v = getFilteredVector(rawField, cx, cy);
-                let mag = Math.sqrt(v.x*v.x + v.y*v.y); 
-                if(mag < 0.00001) break;
+                let rawField = computeFieldAt(cx, cy); let v = getFilteredVector(rawField, cx, cy);
+                let mag = Math.sqrt(v.x*v.x + v.y*v.y); if(mag < 0.00001) break;
                 cx -= (v.x / mag) * STEP_SIZE; cy -= (v.y / mag) * STEP_SIZE;
                 if(Math.abs(cx) > width/1.6 || Math.abs(cy) > height/1.6 || Math.sqrt(cx*cx + cy*cy) < 20) break;
                 pointsBackward.push({x: cx, y: cy});
@@ -757,12 +760,9 @@
         try {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.4)'; ctx.fillRect(0, 0, width, height);
             ctx.save(); ctx.translate(width / 2, height / 2);
-            
             if (!chkPauseTrace.checked) updatePhysics();
-            
             ctx.globalAlpha = 1.0; ctx.setLineDash([]);
             
-            // DRAW GEOMETRY
             if (!isManualMode) {
                 if (geometry === 'ring') {
                     let oscAngle = amp * Math.sin(globalTime * freq);
@@ -778,65 +778,62 @@
                     ctx.beginPath(); ctx.arc(0, oscY, 4, 0, Math.PI*2); ctx.fillStyle = '#FFF'; ctx.fill();
                 }
             } else {
-                // Manual Mode: NO TARGET DRAWN (Invisible Probe)
+                let p = particles[0];
+                ctx.beginPath(); ctx.arc(p.x * visualZoom, p.y * visualZoom, 4, 0, Math.PI*2);
+                ctx.fillStyle = '#FFF'; ctx.fill();
             }
 
             let safeN = Math.max(N, 1); 
-
-            // STEP 20 for High Density Grid
             const step = 20; 
+            const B_SCALE_FACTOR = 800 / Math.sqrt(safeN); 
+            const MAX_ARROW_LEN = step * 0.95;
+            const MAX_S_LEN = step * 0.9;
 
-            if (chkMagneticMap.checked) {
-                const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
-                const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
-                const B_SCALE_FACTOR = 800 / Math.sqrt(safeN); 
-                for (let x = startX; x <= endX; x += step) {
-                    for (let y = startY; y <= endY; y += step) {
-                        let field = computeFieldAt(x, y); let Bz = field.Bz;
+            // UNIFIED GRID LOOP (Centered Offset)
+            // Offset ensures we never hit (0,0) exactly
+            // Increase loop range by +2 to cover full screen
+            const nX = Math.ceil(width / 2 / step) + 2;
+            const nY = Math.ceil(height / 2 / step) + 2;
+
+            for (let i = -nX; i <= nX; i++) {
+                for (let j = -nY; j <= nY; j++) {
+                    // CENTERED OFFSET: (i + 0.5) * step
+                    let x = (i + 0.5) * step;
+                    let y = (j + 0.5) * step;
+                    
+                    let field = computeFieldAt(x, y); 
+                    
+                    // 1. MAGNETIC
+                    if (chkMagneticMap.checked) {
+                        let Bz = field.Bz;
                         let intensity = Math.tanh(Bz * B_SCALE_FACTOR / 60); let absI = Math.abs(intensity);
                         if (absI > 0.02) {
                             let radius = absI * (step * 0.4); radius = Math.max(radius, 1.0);
-                            ctx.strokeStyle = (Bz > 0) ? '#ffcc00' : '#00ccff'; ctx.lineWidth = 1.2;
-                            ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.stroke(); 
-                            if (Bz > 0) { ctx.fillStyle = '#ffcc00'; ctx.beginPath(); ctx.arc(x, y, 1.5, 0, Math.PI*2); ctx.fill(); }
-                            else { let r = radius * 0.6; ctx.beginPath(); ctx.moveTo(x - r, y - r); ctx.lineTo(x + r, y + r); ctx.moveTo(x + r, y - r); ctx.lineTo(x - r, y + r); ctx.stroke(); }
+                            ctx.fillStyle = (Bz > 0) ? 'rgba(255, 200, 0, 0.5)' : 'rgba(0, 200, 255, 0.5)';
+                            ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2); ctx.fill(); 
                         }
                     }
-                }
-            }
 
-            if (chkFieldMap.checked) {
-                const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
-                const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
-                const MAX_ARROW_LEN = step * 0.95;
-                
-                for (let x = startX; x <= endX; x += step) {
-                    for (let y = startY; y <= endY; y += step) {
-                        let rawField = computeFieldAt(x, y); let v = getFilteredVector(rawField, x, y);
+                    // 2. ELECTRIC
+                    if (chkFieldMap.checked) {
+                        let v = getFilteredVector(field, x, y);
                         let mag = Math.sqrt(v.x*v.x + v.y*v.y);
                         if (mag > 0.00005) {
                             let magPerCharge = mag / safeN;
                             let intensity = Math.log(1 + magPerCharge * 500); 
                             let ratio = intensity / 4.0; if(ratio > 1) ratio = 1;
                             let len = ratio * MAX_ARROW_LEN;
-                            let width = 1 + 2 * (len / MAX_ARROW_LEN); 
+                            let w = 1 + 2 * (len / MAX_ARROW_LEN); 
                             if(len > 3) {
                                 let dx = (v.x/mag) * len; let dy = (v.y/mag) * len;
-                                if (chkMagneticMap.checked || chkPoynting.checked) drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#FFFFFF', width, 0.8, true);
-                                drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#FFFFFF', width, 0.8, false);
+                                let isBg = (chkMagneticMap.checked || chkPoynting.checked);
+                                drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#FFFFFF', w, 0.8, isBg);
                             }
                         }
                     }
-                }
-            }
 
-            if (chkPoynting.checked) {
-                const startX = -Math.floor(width/2 / step) * step; const endX = Math.ceil(width/2 / step) * step;
-                const startY = -Math.floor(height/2 / step) * step; const endY = Math.ceil(height/2 / step) * step;
-                const MAX_S_LEN = step * 0.9;
-                for (let x = startX; x <= endX; x += step) {
-                    for (let y = startY; y <= endY; y += step) {
-                        let field = computeFieldAt(x, y); 
+                    // 3. POYNTING
+                    if (chkPoynting.checked) {
                         let Sx = field.total.y * field.Bz;
                         let Sy = -field.total.x * field.Bz;
                         let Smag = Math.sqrt(Sx*Sx + Sy*Sy);
@@ -846,11 +843,11 @@
                             let intensity = Math.log(1 + normalizedS * 500); 
                             let ratio = intensity / 4.0; if(ratio > 1) ratio = 1;
                             let len = ratio * MAX_S_LEN;
-                            let width = 0.5 + 1.0 * (len / MAX_S_LEN);
+                            let w = 0.5 + 1.0 * (len / MAX_S_LEN);
                             if (len > 3) {
                                 let dx = (Sx/Smag) * len; let dy = (Sy/Smag) * len;
-                                if (chkMagneticMap.checked || chkFieldMap.checked) drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#00FF00', width, 0.9, true);
-                                drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#00FF00', width, 0.9, false);
+                                let isBg = (chkMagneticMap.checked || chkFieldMap.checked);
+                                drawArrow(ctx, x - dx/2, y - dy/2, x + dx/2, y + dy/2, '#00FF00', w, 0.9, isBg);
                             }
                         }
                     }
@@ -868,12 +865,8 @@
                             ctx.arc(p.x * visualZoom, p.y * visualZoom, 3, 0, Math.PI*2); ctx.fill(); 
                         }
                         if(!chkPauseTrace.checked) {
-                            // Target depends on Mode: Mouse in Auto, Probe in Manual?
-                            // No: "Retarded position" is relative to "the Observer".
-                            // In Auto mode, Mouse is observer. In Manual mode, Probe is observer.
                             let obsX = isManualMode ? (probe.x * visualZoom) : mouse.x;
                             let obsY = isManualMode ? (probe.y * visualZoom) : mouse.y;
-
                             if(chkShowRetarded.checked || chkShowVirtual.checked) {
                                 let ret = getRetardedState(i, obsX, obsY);
                                 if(ret) {
@@ -895,11 +888,9 @@
                 }
             }
             
-            // SCOPE LOGIC (DEPENDS ON MODE)
             if (chkShowScope.checked) {
                 let obsX = isManualMode ? (probe.x * visualZoom) : mouse.x;
                 let obsY = isManualMode ? (probe.y * visualZoom) : mouse.y;
-                
                 if(isFinite(obsX) && isFinite(obsY)) {
                     let field = computeFieldAt(obsX, obsY); 
                     try {
@@ -911,37 +902,35 @@
                 }
             }
 
-            // TOTAL VECTOR DRAWING (ALWAYS DRAW, even in manual)
-            // In manual mode, we draw at the center (probe location)
-            let obsX, obsY;
-            if (isManualMode) {
-                obsX = probe.x * visualZoom;
-                obsY = probe.y * visualZoom;
-            } else {
-                obsX = mouse.x;
-                obsY = mouse.y;
-            }
+            // TOTAL VECTOR DRAWING (ONLY IN AUTO MODE)
+            if (!isManualMode) {
+                let obsX = mouse.x;
+                let obsY = mouse.y;
+                if (isFinite(obsX) && isFinite(obsY)) {
+                    let field = computeFieldAt(obsX, obsY);
+                    let v_filtered = getFilteredVector(field, obsX, obsY); 
+                    if (field.count > 0) {
+                        let displayScale = 40 * Math.sqrt(10/safeN); 
+                        
+                        let v_C_rad = { x: dot(field.coulomb, u_r) * u_r.x * displayScale, y: dot(field.coulomb, u_r) * u_r.y * displayScale };
+                        let v_C_orth = { x: dot(field.coulomb, u_theta) * u_theta.x * displayScale, y: dot(field.coulomb, u_theta) * u_theta.y * displayScale };
+                        let v_R_rad = { x: dot(field.rad, u_r) * u_r.x * displayScale, y: dot(field.rad, u_r) * u_r.y * displayScale };
+                        let v_R_orth = { x: dot(field.rad, u_theta) * u_theta.x * displayScale, y: dot(field.rad, u_theta) * u_theta.y * displayScale };
+                        
+                        // Only draw components if NOT manual mode
+                        if (!isManualMode) {
+                            if (chkCoulombRad.checked) drawArrow(ctx, obsX, obsY, obsX + v_C_rad.x, obsY + v_C_rad.y, '#00ff00', 1.5, 0.9);
+                            if (chkCoulombOrtho.checked) drawArrow(ctx, obsX, obsY, obsX + v_C_orth.x, obsY + v_C_orth.y, '#66ff66', 1.5, 0.9);
+                            if (chkRadRad.checked) drawArrow(ctx, obsX, obsY, obsX + v_R_rad.x, obsY + v_R_rad.y, '#ff3333', 1.5, 0.9);
+                            if (chkRadOrtho.checked) drawArrow(ctx, obsX, obsY, obsX + v_R_orth.x, obsY + v_R_orth.y, '#ff8888', 1.5, 0.9);
+                        }
 
-            if (isFinite(obsX) && isFinite(obsY)) {
-                let field = computeFieldAt(obsX, obsY);
-                let v_filtered = getFilteredVector(field, obsX, obsY); 
-                if (field.count > 0) {
-                    let displayScale = 40 * Math.sqrt(10/safeN); 
-                    
-                    let v_C_rad = { x: dot(field.coulomb, u_r) * u_r.x * displayScale, y: dot(field.coulomb, u_r) * u_r.y * displayScale };
-                    let v_C_orth = { x: dot(field.coulomb, u_theta) * u_theta.x * displayScale, y: dot(field.coulomb, u_theta) * u_theta.y * displayScale };
-                    let v_R_rad = { x: dot(field.rad, u_r) * u_r.x * displayScale, y: dot(field.rad, u_r) * u_r.y * displayScale };
-                    let v_R_orth = { x: dot(field.rad, u_theta) * u_theta.x * displayScale, y: dot(field.rad, u_theta) * u_theta.y * displayScale };
-                    
-                    if (chkCoulombRad.checked) drawArrow(ctx, obsX, obsY, obsX + v_C_rad.x, obsY + v_C_rad.y, '#00ff00', 1.5, 0.9);
-                    if (chkCoulombOrtho.checked) drawArrow(ctx, obsX, obsY, obsX + v_C_orth.x, obsY + v_C_orth.y, '#66ff66', 1.5, 0.9);
-                    if (chkRadRad.checked) drawArrow(ctx, obsX, obsY, obsX + v_R_rad.x, obsY + v_R_rad.y, '#ff3333', 1.5, 0.9);
-                    if (chkRadOrtho.checked) drawArrow(ctx, obsX, obsY, obsX + v_R_orth.x, obsY + v_R_orth.y, '#ff8888', 1.5, 0.9);
-
-                    let v_sum = { x: v_filtered.x * displayScale, y: v_filtered.y * displayScale };
-                    let vSumLen = Math.sqrt(v_sum.x**2 + v_sum.y**2);
-                    if (vSumLen > 0.001) {
-                        drawArrow(ctx, obsX, obsY, obsX + v_sum.x, obsY + v_sum.y, '#FFFF00', 2.5, 1.0);
+                        // TOTAL VECTOR
+                        let v_sum = { x: v_filtered.x * displayScale, y: v_filtered.y * displayScale };
+                        let vSumLen = Math.sqrt(v_sum.x**2 + v_sum.y**2);
+                        if (vSumLen > 0.001) {
+                            drawArrow(ctx, obsX, obsY, obsX + v_sum.x, obsY + v_sum.y, '#FFFF00', 2.5, 1.0);
+                        }
                     }
                 }
             }
@@ -959,9 +948,7 @@
         let u_r = {x:0, y:0}, u_theta = {x:0, y:0};
         let dist = Math.sqrt(x*x + y*y);
         if(dist > 0.001) { u_r.x = x / dist; u_r.y = y / dist; u_theta.x = -u_r.y; u_theta.y = u_r.x; }
-        
         window.u_r = u_r; window.u_theta = u_theta; 
-
         let finalVec = {x:0, y:0};
         if(chkCoulombRad.checked) { let val = dot(field.coulomb, u_r); finalVec.x += val * u_r.x; finalVec.y += val * u_r.y; }
         if(chkCoulombOrtho.checked) { let val = dot(field.coulomb, u_theta); finalVec.x += val * u_theta.x; finalVec.y += val * u_theta.y; }
